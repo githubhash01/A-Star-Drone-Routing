@@ -28,7 +28,8 @@ public class LngLatHandler implements LngLatHandling {
 
         // else, assume the region is a simple polygon and use ray casting algorithm
         // if the number of intercepts is odd, then the point is inside the polygon
-        return rayCastIntercepts(position, region) % 2 == 1;
+        int max_east = 180; // placeholder
+        return rayCastIntercepts(position, region, max_east) % 2 == 1;
     }
 
     @Override
@@ -50,9 +51,8 @@ public class LngLatHandler implements LngLatHandling {
     }
 
     // helper function for horizontal ray casting for isInRegion
-    private int rayCastIntercepts(LngLat point, NamedRegion polygon) {
+    public int rayCastIntercepts(LngLat point, NamedRegion polygon, int max_longitude) {
         int intercepts = 0;
-        int max_longitude = 0; // sets furthest east point of the ray in the north sea :)
 
         double[][] ray = {{point.lng(), point.lat()}, {max_longitude, point.lat()}};
         int N = polygon.vertices().length;
@@ -66,8 +66,9 @@ public class LngLatHandler implements LngLatHandling {
         return intercepts;
     }
 
-    // helper function for rayCast
-    private boolean lineIntersect(double[][] ray, double[][] edge) {
+    // helper function for rayCast to test if a ray intersects an edge
+    public boolean lineIntersect(double[][] ray, double[][] edge)
+    {
         // calculate denominator of determinant formed by 2x2 matrix of edge and ray vectors
         double x1 = ray[0][0];
         double y1 = ray[0][1];
@@ -80,9 +81,18 @@ public class LngLatHandler implements LngLatHandling {
 
         double denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
 
-        // if denominator is 0, lines are parallel or coincident
-        return denominator != 0;
+        // if denominator is 0, lines are parallel or coincident - so no intersection
+        if (denominator == 0){
+            return false;
+        }
+        // finding intercept coordinates using Cramer's rule
+        double a = (x1 * y2 - y1 * x2);
+        double b = (x3 * y4 - y3 * x4);
+        double Px = (a * (x3 - x4) - (x1 - x2) * b) / denominator;
+        // double Py = (a * (y3 - y4) - (y1 - y2) * b) / denominator; - not needed only included for debugging purposes
 
+        // we only interested in intersections to the right of the ray origin
+        return !(Px < x1);
     }
 }
 
