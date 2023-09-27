@@ -113,36 +113,28 @@ public class OrderValidator implements OrderValidation {
     /*
     checks to make sure that each pizza in the order is included in a menu of one of the restaurants
     for the time being, ignores the rule that the pizzas must be from the same restaurant
+    however for efficiency's sake it would be better to check that the pizzas are from the same restaurant
+    and also check that said restaurant is open at the time of the order
      */
     public boolean definedPizzas(Pizza[] pizzas, Restaurant[] definedRestaurants) {
 
-        // get the first pizza and find the restaurant it is from
-        Pizza firstPizza = pizzas[0];
-        Restaurant firstRestaurant = null;
-        for (Restaurant restaurant : definedRestaurants) {
-            for (Pizza pizza : restaurant.menu()) {
-                if (pizza.equals(firstPizza)) {
-                    firstRestaurant = restaurant;
-                    break;
+        for (Pizza pizza: pizzas) {
+            boolean pizzaFound = false;
+            for (Restaurant restaurant : definedRestaurants) {
+                for (Pizza listedPizza : restaurant.menu()) {
+                    if (pizza.equals(listedPizza)) {
+                        pizzaFound = true;
+                        break;
+                    }
                 }
             }
-            }
-
-        // if no restaurant was found for the first pizza, return false
-        if (firstRestaurant == null) {
-            return false;
-        }
-
-        // now check if the other pizzas are from the same restaurant
-        for (Pizza pizza : pizzas) {
-
-            for (Pizza listedPizza: firstRestaurant.menu()) {
-                if (!pizza.equals(listedPizza)) {
-                    return false;
-                }
+            // if after going through every listed pizza in the menu of every restaurant, the pizza is not found
+            // then the pizza is considered 'undefined', and hence at least one of the pizzas is undefined
+            if (!pizzaFound) {
+                return false;
             }
         }
-        return false; // TODO
+        return true;
     }
 
     public boolean excessivePizza(Pizza[] pizzas) {
