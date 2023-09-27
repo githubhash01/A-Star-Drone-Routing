@@ -1,13 +1,13 @@
 package uk.ac.ed.inf;
 
-// importing OrderValidation interface
+// imports
 import uk.ac.ed.inf.ilp.data.Order;
 import uk.ac.ed.inf.ilp.data.Restaurant;
 import uk.ac.ed.inf.ilp.interfaces.OrderValidation;
 import uk.ac.ed.inf.ilp.constant.OrderValidationCode;
 import uk.ac.ed.inf.ilp.data.Pizza;
-// import system constants
 import uk.ac.ed.inf.ilp.constant.SystemConstants;
+import uk.ac.ed.inf.ilp.data.Restaurant;
 
 
 public class OrderValidator implements OrderValidation {
@@ -16,7 +16,6 @@ public class OrderValidator implements OrderValidation {
         // 1. Card Number
         String cardNumber = orderToValidate.getCreditCardInformation().getCreditCardNumber();
         if (!validCardNumber(cardNumber)) {
-            // update the order validation status
             orderToValidate.setOrderValidationCode(OrderValidationCode.CARD_NUMBER_INVALID);
             return orderToValidate;
         }
@@ -25,7 +24,6 @@ public class OrderValidator implements OrderValidation {
         String orderExpiryDate = orderToValidate.getCreditCardInformation().getCreditCardExpiry();
         String orderDate = orderToValidate.getOrderDate().toString();
         if (!validExpiry(orderExpiryDate, orderDate)) {
-            // update the order validation status
             orderToValidate.setOrderValidationCode(OrderValidationCode.EXPIRY_DATE_INVALID);
             return orderToValidate;
         }
@@ -33,7 +31,6 @@ public class OrderValidator implements OrderValidation {
         // 3. CVV Number
         String CVV = orderToValidate.getCreditCardInformation().getCvv();
         if (!validCVV(CVV)) {
-            // update the order validation status
             orderToValidate.setOrderValidationCode(OrderValidationCode.CVV_INVALID);
             return orderToValidate;
         }
@@ -42,7 +39,6 @@ public class OrderValidator implements OrderValidation {
         Pizza[] pizzas = orderToValidate.getPizzasInOrder();
         int priceTotalInPence = orderToValidate.getPriceTotalInPence();
         if (!correctTotalPrice(pizzas, priceTotalInPence)) {
-            // update the order validation status
             orderToValidate.setOrderValidationCode(OrderValidationCode.TOTAL_INCORRECT);
             return orderToValidate;
         }
@@ -113,4 +109,50 @@ public class OrderValidator implements OrderValidation {
         // check if the total price is equal to priceTotalInPence
         return calculatedTotal == priceTotalInPence;
     }
+
+    /*
+    checks to make sure that each pizza in the order is included in a menu of one of the restaurants
+    for the time being, ignores the rule that the pizzas must be from the same restaurant
+     */
+    public boolean definedPizzas(Pizza[] pizzas, Restaurant[] definedRestaurants) {
+
+        // get the first pizza and find the restaurant it is from
+        Pizza firstPizza = pizzas[0];
+        Restaurant firstRestaurant = null;
+        for (Restaurant restaurant : definedRestaurants) {
+            for (Pizza pizza : restaurant.menu()) {
+                if (pizza.equals(firstPizza)) {
+                    firstRestaurant = restaurant;
+                    break;
+                }
+            }
+            }
+
+        // if no restaurant was found for the first pizza, return false
+        if (firstRestaurant == null) {
+            return false;
+        }
+
+        // now check if the other pizzas are from the same restaurant
+        for (Pizza pizza : pizzas) {
+
+            for (Pizza listedPizza: firstRestaurant.menu()) {
+                if (!pizza.equals(listedPizza)) {
+                    return false;
+                }
+            }
+        }
+        return false; // TODO
+    }
+
+    public boolean excessivePizza(Pizza[] pizzas) {
+        // An order can have a minimum of one pizza, and a maximum of four.
+        return pizzas.length >= 1 && pizzas.length <= 4;
+    }
 }
+
+// TODO:
+/**
+ * check if I have understood the definedPizza function / Restaurants[] parameter correctly
+ * go to a lab and ask them to check my test cases for edge cases
+ */

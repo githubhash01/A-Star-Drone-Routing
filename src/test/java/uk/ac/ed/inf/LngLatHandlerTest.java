@@ -106,3 +106,8 @@ public class LngLatHandlerTest extends TestCase{
 
 
 }
+// TODO:
+/**
+ * Check if I have understood inRegion and the Region class correctly
+ * ask if my implementation is on the right lines (no pun intended)
+ */
