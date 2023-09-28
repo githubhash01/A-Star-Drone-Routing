@@ -24,12 +24,21 @@ public class LngLatHandler implements LngLatHandling {
 
     @Override
     public boolean isInRegion(LngLat position, NamedRegion region) {
-        // fast check if the region is the central region as special case where region is rectangular
 
-        // else, assume the region is a simple polygon and use ray casting algorithm
-        // if the number of intercepts is odd, then the point is inside the polygon
-        int max_east = 180; // placeholder
-        return rayCastIntercepts(position, region, max_east) % 2 == 1;
+        // TODO - implement a fast check for central region based on the fact that it is a rectangle
+        int max_east = 180; // effectively infinity for the purposes of this algorithm in the context of Edinburgh
+        int intercepts = 0;
+
+        double[][] ray = {{position.lng(), position.lat()}, {max_east, position.lat()}};
+        int N = region.vertices().length;
+        // iterate through for each pair i and i+1 including the last pair N-1 and 0
+        for (int i = 0; i < N; i++) {
+            double[][] edge = {{region.vertices()[i].lng(), region.vertices()[i].lat()}, {region.vertices()[(i + 1) % N].lng(), region.vertices()[(i + 1) % N].lat()}};
+            if (lineIntersect(ray, edge)) {
+                intercepts++;
+            }
+        }
+        return intercepts % 2 == 1; // if odd number of intercepts, then point is inside polygon
     }
 
     @Override
@@ -39,7 +48,10 @@ public class LngLatHandler implements LngLatHandling {
         if (angle == 999) {
             return startPosition;
         }
-        // else assume angle is one of the 16 legal directions
+        // else check angle is not one of the 16 legal directions, and throw an error
+        else if (angle % 22.5 != 0 || angle < 0 || angle >= 360) {
+            throw new IllegalArgumentException("Angle must be one of the 16 tertiary compass directions");
+        }
         else {
             // calculate longitudinal and latitudinal components of movement in degrees
             double lngMovement = SystemConstants.DRONE_MOVE_DISTANCE * Math.cos(Math.toRadians(angle));
@@ -50,49 +62,44 @@ public class LngLatHandler implements LngLatHandling {
         }
     }
 
-    // helper function for horizontal ray casting for isInRegion
-    public int rayCastIntercepts(LngLat point, NamedRegion polygon, int max_longitude) {
-        int intercepts = 0;
-
-        double[][] ray = {{point.lng(), point.lat()}, {max_longitude, point.lat()}};
-        int N = polygon.vertices().length;
-        // iterate through for each pair i and i+1 including the last pair N-1 and 0
-        for (int i = 0; i < N; i++) {
-            double[][] edge = {{polygon.vertices()[i].lng(), polygon.vertices()[i].lat()}, {polygon.vertices()[(i + 1) % N].lng(), polygon.vertices()[(i + 1) % N].lat()}};
-            if (lineIntersect(ray, edge)) {
-                intercepts++;
-            }
-        }
-        return intercepts;
-    }
-
-    // helper function for rayCast to test if a ray intersects an edge
+    // helper function for inRegion to test if a ray intersects an edge
     public boolean lineIntersect(double[][] ray, double[][] edge)
     {
         // calculate denominator of determinant formed by 2x2 matrix of edge and ray vectors
-        double x1 = ray[0][0];
-        double y1 = ray[0][1];
-        double x2 = ray[1][0];
-        double y2 = ray[1][1];
-        double x3 = edge[0][0];
-        double y3 = edge[0][1];
-        double x4 = edge[1][0];
-        double y4 = edge[1][1];
+        double ray_origin_lng = ray[0][0];
+        double ray_origin_lat = ray[0][1];
+        double ray_final_lng = ray[1][0];
+        double ray_final_lat = ray[1][1]; // should always be the same as ray_origin_lat
 
-        double denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+        double edge_start_lng = edge[0][0];
+        double edge_start_lat = edge[0][1];
+        double edge_final_lng = edge[1][0];
+        double edge_final_lat = edge[1][1];
 
-        // if denominator is 0, lines are parallel or coincident - so no intersection
-        if (denominator == 0){
+        // If entire edge is above the ray - intersection impossible
+        if (edge_start_lat > ray_origin_lat && edge_final_lat > ray_origin_lat) {
             return false;
         }
-        // finding intercept coordinates using Cramer's rule
-        double a = (x1 * y2 - y1 * x2);
-        double b = (x3 * y4 - y3 * x4);
-        double Px = (a * (x3 - x4) - (x1 - x2) * b) / denominator;
-        // double Py = (a * (y3 - y4) - (y1 - y2) * b) / denominator; - not needed only included for debugging purposes
+        // If entire edge is below the ray - intersection impossible
+        if (edge_start_lat < ray_origin_lat && edge_final_lat < ray_origin_lat) {
+            return false;
+        }
+        // If entire edge is to the left of the ray - intersection impossible
+        if (edge_start_lng < ray_origin_lng && edge_final_lng < ray_origin_lng) {
+            return false;
+        }
+        // if denominator is 0, lines are parallel or coincident - so no intersection
+        double denominator = (ray_origin_lng - ray_final_lng) * (edge_start_lat - edge_final_lat) - (ray_origin_lat - ray_final_lat) * (edge_start_lng - edge_final_lng);
+        if (denominator == 0) {
+            return false;
+        }
+        // finding the point of intersection
+        // finally check that the intercept is to the right of the ray origin
+        double a = (ray_origin_lng * ray_final_lat - ray_origin_lat * ray_final_lng);
+        double b = (edge_start_lng * edge_final_lat - edge_start_lat * edge_final_lng);
+        double Px = (a * (edge_start_lng - edge_final_lng) - (ray_origin_lng - ray_final_lng) * b) / denominator;
+        return !(Px < ray_origin_lng);
 
-        // we only interested in intersections to the right of the ray origin
-        return !(Px < x1);
     }
 }
 

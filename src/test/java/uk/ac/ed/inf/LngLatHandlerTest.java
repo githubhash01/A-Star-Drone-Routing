@@ -5,6 +5,8 @@ import junit.framework.TestSuite;
 
 import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
+import com.google.gson.*;
+
 
 /**
  * A file like AppTest to test the LngLatHandler class
@@ -82,7 +84,7 @@ public class LngLatHandlerTest extends TestCase{
 
     }
 
-    public void testingRayCasting()
+    public void testingSimpleRectangle()
     {
         // test the isInRegion method
         // create a NamedRegion object
@@ -90,24 +92,67 @@ public class LngLatHandlerTest extends TestCase{
         // create a LngLat object
         LngLat lngLat = new LngLat(0.5, 0.5);
         // assert true as the point is inside the polygon
-        assertEquals(1, lngLatHandler.rayCastIntercepts(lngLat, namedRegion, 2) % 2);
+        assertTrue(lngLatHandler.isInRegion(lngLat, namedRegion));
 
     }
 
-    // testing easy in region for a simple polygon with 4 vertices and a point inside, on the edge and outside
-    public void inRegion(){
+    public void testingGeorgeSquare(){
+        // creating a NamedRegion object for George Square
+        NamedRegion georgeSquare = new NamedRegion("George Square Area",
+                new LngLat[]{
+                        new LngLat(-3.190578818321228, 55.94402412577528),
+                        new LngLat(-3.1899887323379517, 55.94284650540911),
+                        new LngLat(-3.187097311019897, 55.94328811724263),
+                        new LngLat(-3.187682032585144, 55.944477740393744),
+                        new LngLat(-3.190578818321228, 55.94402412577528)});
 
+        // creating a LngLat object at a point inside George Square
+        LngLat insideGeorgeSquare = new LngLat(-3.189, 55.943);
+        // assert true as the point is inside the polygon
+        assertTrue(lngLatHandler.isInRegion(insideGeorgeSquare, georgeSquare));
+
+        // defining a point that is just outside George Square
+        LngLat justOutsideGeorgeSquare = new LngLat(-3.1901,55.943);
+        // assert false as the point is outside the polygon
+        assertFalse(lngLatHandler.isInRegion(justOutsideGeorgeSquare, georgeSquare));
     }
 
-    // testing in region for a simple polygon with 10 vertices and a point inside, on the edge, and outside
-    public void harderInRegion(){
+    public void testingBayesCenter(){
+        // creating a NamedRegion object for Bayes Center
+        NamedRegion bayesCenter = new NamedRegion("Bayes Central Area",
+                new LngLat[]{
+                        new LngLat(-3.1876927614212036, 55.94520696732767),
+                        new LngLat(-3.187555968761444, 55.9449621408666),
+                        new LngLat(-3.186981976032257, 55.94505676722831),
+                        new LngLat(-3.1872327625751495, 55.94536993377657),
+                        new LngLat(-3.1874459981918335, 55.9453361389472),
+                        new LngLat(-3.1873735785484314, 55.94519344934259),
+                        new LngLat(-3.1875935196876526, 55.94515665035927),
+                        new LngLat(-3.187624365091324, 55.94521973430925),
+                        new LngLat(-3.1876927614212036, 55.94520696732767)});
 
+        // creating a number of LngLat objects at points outside Bayes Center
+        LngLat outsideBayesCenter = new LngLat(-3.1876, 55.9452);
+        // \left(-3.1874,\ 55.9452\right)
+        LngLat outsideBayesCenter2 = new LngLat(-3.1874, 55.9452);
+        // \left(-3.187,\ 55.9452\right)
+        LngLat outsideBayesCenter3 = new LngLat(-3.187, 55.9452);
+        // \left(-3.187,\ 55.945\right)
+        LngLat outsideBayesCenter4 = new LngLat(-3.187, 55.945);
+        // \left(-3.1874,\ 55.945344\right)
+        LngLat outsideBayesCenter5 = new LngLat(-3.1874, 55.945344);
+
+        // assert false for all the points as they are outside the polygon
+        assertFalse(lngLatHandler.isInRegion(outsideBayesCenter, bayesCenter));
+        assertFalse(lngLatHandler.isInRegion(outsideBayesCenter2, bayesCenter));
+        assertFalse(lngLatHandler.isInRegion(outsideBayesCenter3, bayesCenter));
+        assertFalse(lngLatHandler.isInRegion(outsideBayesCenter4, bayesCenter));
+        assertFalse(lngLatHandler.isInRegion(outsideBayesCenter5, bayesCenter));
+
+        // creating LngLat objects for points inside Bayes Center
+        // \left(-3.1874,\ 55.94534343\right)
+        LngLat insideBayesCenter = new LngLat(-3.1874, 55.945343428);
+        assertTrue(lngLatHandler.isInRegion(insideBayesCenter, bayesCenter));
     }
 
-
-}
-// TODO:
-/**
- * Check if I have understood inRegion and the Region class correctly
- * ask if my implementation is on the right lines (no pun intended)
- */
+    }
