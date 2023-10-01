@@ -31,7 +31,7 @@ public class LngLatHandler implements LngLatHandling {
 
         double[][] ray = {{position.lng(), position.lat()}, {max_east, position.lat()}};
         int N = region.vertices().length;
-        // iterate through for each pair i and i+1 including the last pair N-1 and 0
+        // iterate through for each pair i and i+1 including the last pair N-1 and 0, counting intercepts
         for (int i = 0; i < N; i++) {
             double[][] edge = {{region.vertices()[i].lng(), region.vertices()[i].lat()}, {region.vertices()[(i + 1) % N].lng(), region.vertices()[(i + 1) % N].lat()}};
             if (lineIntersect(ray, edge)) {
