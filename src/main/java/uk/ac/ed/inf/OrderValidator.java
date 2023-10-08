@@ -2,6 +2,7 @@ package uk.ac.ed.inf;
 
 // Imports from the ILP starter code
 import uk.ac.ed.inf.ilp.data.Order;
+import uk.ac.ed.inf.ilp.constant.OrderStatus;
 import uk.ac.ed.inf.ilp.data.Restaurant;
 import uk.ac.ed.inf.ilp.interfaces.OrderValidation;
 import uk.ac.ed.inf.ilp.constant.OrderValidationCode;
@@ -20,6 +21,7 @@ public class OrderValidator implements OrderValidation {
         String cardNumber = orderToValidate.getCreditCardInformation().getCreditCardNumber();
         if (!validCardNumber(cardNumber)) {
             orderToValidate.setOrderValidationCode(OrderValidationCode.CARD_NUMBER_INVALID);
+            orderToValidate.setOrderStatus(OrderStatus.INVALID);
             return orderToValidate;
         }
 
@@ -28,6 +30,7 @@ public class OrderValidator implements OrderValidation {
         String orderDate = orderToValidate.getOrderDate().toString();
         if (!validExpiry(orderExpiryDate, orderDate)) {
             orderToValidate.setOrderValidationCode(OrderValidationCode.EXPIRY_DATE_INVALID);
+            orderToValidate.setOrderStatus(OrderStatus.INVALID);
             return orderToValidate;
         }
 
@@ -35,6 +38,7 @@ public class OrderValidator implements OrderValidation {
         String CVV = orderToValidate.getCreditCardInformation().getCvv();
         if (!validCVV(CVV)) {
             orderToValidate.setOrderValidationCode(OrderValidationCode.CVV_INVALID);
+            orderToValidate.setOrderStatus(OrderStatus.INVALID);
             return orderToValidate;
         }
 
@@ -43,12 +47,14 @@ public class OrderValidator implements OrderValidation {
         int priceTotalInPence = orderToValidate.getPriceTotalInPence();
         if (incorrectTotalPrice(pizzas, priceTotalInPence)) {
             orderToValidate.setOrderValidationCode(OrderValidationCode.TOTAL_INCORRECT);
+            orderToValidate.setOrderStatus(OrderStatus.INVALID);
             return orderToValidate;
         }
 
         // 5. Excessive Pizzas
         if (excessivePizza(pizzas)) {
             orderToValidate.setOrderValidationCode(OrderValidationCode.MAX_PIZZA_COUNT_EXCEEDED);
+            orderToValidate.setOrderStatus(OrderStatus.INVALID);
             return orderToValidate;
         }
 
@@ -58,12 +64,14 @@ public class OrderValidator implements OrderValidation {
         // 6. Defined Pizzas
         if (undefinedPizzas(pizzaLocations)) {
             orderToValidate.setOrderValidationCode(OrderValidationCode.PIZZA_NOT_DEFINED);
+            orderToValidate.setOrderStatus(OrderStatus.INVALID);
             return orderToValidate;
         }
 
         // 7. Multiple Restaurants
         if (multipleRestaurants(pizzaLocations)) {
             orderToValidate.setOrderValidationCode(OrderValidationCode.PIZZA_FROM_MULTIPLE_RESTAURANTS);
+            orderToValidate.setOrderStatus(OrderStatus.INVALID);
             return orderToValidate;
         }
 
@@ -71,11 +79,13 @@ public class OrderValidator implements OrderValidation {
         // 8. Restaurant Opening Hours
         if (restaurantClosed(restaurant, orderToValidate)) {
             orderToValidate.setOrderValidationCode(OrderValidationCode.RESTAURANT_CLOSED);
+            orderToValidate.setOrderStatus(OrderStatus.INVALID);
             return orderToValidate;
         }
 
         // Otherwise the order is valid
         orderToValidate.setOrderValidationCode(OrderValidationCode.NO_ERROR);
+        orderToValidate.setOrderStatus(OrderStatus.VALID_BUT_NOT_DELIVERED);
         return orderToValidate;
     }
 
@@ -101,28 +111,28 @@ public class OrderValidator implements OrderValidation {
         }
         return true;
     }
-
     public boolean validExpiry(String expiryDate, String orderDate) {
-        // check if the expiry date occurs or on the order date
-        // orderDate is in YYYY-MM-DD format whereas expiryDate is in MM/YY format so parsing necessary
         String[] orderDateSplit = orderDate.split("-");
         int orderYear = Integer.parseInt(orderDateSplit[0]);
         int orderMonth = Integer.parseInt(orderDateSplit[1]);
-        // extract the month and year from expiryDate
         String[] expiryDateSplit = expiryDate.split("/");
         int expiryYear = 2000 + Integer.parseInt(expiryDateSplit[1]); // add 2000 to the year
         int expiryMonth = Integer.parseInt(expiryDateSplit[0]);
 
-        // check that the month is between 1 and 12
         if (expiryMonth < 1 || expiryMonth > 12) {
             return false;
         }
-        // check that the year is between 2000 and 2099
-        if (expiryYear < 2000 || expiryYear > 2099) {
+
+        // make sure the expiry date is not before the order date
+        if (expiryYear < orderYear) {
             return false;
+        } else if (expiryYear == orderYear) {
+            if (expiryMonth < orderMonth) {
+                return false;
+            }
         }
-        // check if the expiry date is not before or on the order date
-        return expiryYear >= orderYear && (expiryYear != orderYear || expiryMonth > orderMonth);
+        return true;
+
     }
 
     public boolean validCVV(String CVV){
@@ -141,13 +151,11 @@ public class OrderValidator implements OrderValidation {
 
     public boolean incorrectTotalPrice(Pizza[] pizzas, int priceTotalInPence){
         int calculatedTotal = 0;
-        // iterate through the pizzas and add up the prices
+        // iterate through the pizzas and add up the prices + delivery charge, then check if it is correct
         for (Pizza pizza : pizzas) {
             calculatedTotal += pizza.priceInPence();
         }
-        // add the delivery charge form the system constants
         calculatedTotal += SystemConstants.ORDER_CHARGE_IN_PENCE;
-        // check if the total price is equal to priceTotalInPence
         return calculatedTotal != priceTotalInPence;
     }
 
