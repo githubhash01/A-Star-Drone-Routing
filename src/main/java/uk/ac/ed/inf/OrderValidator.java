@@ -199,13 +199,18 @@ public class OrderValidator implements OrderValidation {
                 return true;
             }
         }
-        return true;
+        return false;
     }
 
     public boolean multipleRestaurants(int[] pizzaLocations){
         // if the pizzaLocations array contains more than one unique value, then there are multiple restaurants
-        int[] uniquePizzaLocations = Arrays.stream(pizzaLocations).distinct().toArray();
-        return uniquePizzaLocations.length > 1;
+        int pizzaLocation1 = pizzaLocations[0];
+        for (int pizzaLocation : pizzaLocations) {
+            if (pizzaLocation != pizzaLocation1) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean restaurantClosed(Restaurant restaurant, Order order){

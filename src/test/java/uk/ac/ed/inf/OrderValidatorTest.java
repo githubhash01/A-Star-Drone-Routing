@@ -5,12 +5,11 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 // importing order
-import uk.ac.ed.inf.ilp.data.Order;
-import uk.ac.ed.inf.ilp.data.CreditCardInformation;
+import uk.ac.ed.inf.ilp.data.*;
 import uk.ac.ed.inf.ilp.constant.OrderValidationCode;
 import uk.ac.ed.inf.ilp.constant.SystemConstants;
-import uk.ac.ed.inf.ilp.data.Pizza;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 
 public class OrderValidatorTest
@@ -34,8 +33,6 @@ public class OrderValidatorTest
         return new TestSuite( OrderValidatorTest.class );
     }
 
-    // testing OrderValidationCode possible errors
-
     public void testingCardNumberInvalid(){
         // card number must be a string, with exactly 16 digits
         Order orderCardNumberShort = new Order();
@@ -47,10 +44,8 @@ public class OrderValidatorTest
                 )
         );
         OrderValidator orderValidator = new OrderValidator();
-        // order validator returns an order with a defined order validation code
         Order validatedOrder = orderValidator.validateOrder(orderCardNumberShort, null);
 
-        // assert that the order validation code is CARD_NUMBER_INVALID
         assertEquals(OrderValidationCode.CARD_NUMBER_INVALID, validatedOrder.getOrderValidationCode());
 
         // card number too long
@@ -63,7 +58,6 @@ public class OrderValidatorTest
                 )
         );
         OrderValidator orderValidator2 = new OrderValidator();
-        // order validator returns an order with a defined order validation code
         Order validatedOrder2 = orderValidator2.validateOrder(orderCardNumberLong, null);
         assertEquals(OrderValidationCode.CARD_NUMBER_INVALID, validatedOrder2.getOrderValidationCode());
 
@@ -77,7 +71,6 @@ public class OrderValidatorTest
                 )
         );
         OrderValidator orderValidator3 = new OrderValidator();
-        // order validator returns an order with a defined order validation code
         Order validatedOrder3 = orderValidator3.validateOrder(orderCardNumberAlpha, null);
         assertEquals(OrderValidationCode.CARD_NUMBER_INVALID, validatedOrder3.getOrderValidationCode());
 
@@ -94,22 +87,19 @@ public class OrderValidatorTest
                 )
         );
         OrderValidator orderValidator = new OrderValidator();
-        // order validator returns an order with a defined order validation code
         Order validatedOrder = orderValidator.validateOrder(orderExpiryBeforeOrder, null);
         assertEquals(OrderValidationCode.EXPIRY_DATE_INVALID, validatedOrder.getOrderValidationCode());
 
-        // testing an expiry date in the same month as the order date, but before the order date
         Order orderExpirySameMonthBeforeOrder = new Order();
         orderExpirySameMonthBeforeOrder.setOrderDate(LocalDate.of(2023, 9, 1));
         orderExpirySameMonthBeforeOrder.setCreditCardInformation(
                 new CreditCardInformation(
                         "1212121212121212",
-                        "09/23",
+                        "08/23",
                         "222"
                 )
         );
         OrderValidator orderValidator2 = new OrderValidator();
-        // order validator returns an order with a defined order validation code
         Order validatedOrder2 = orderValidator2.validateOrder(orderExpirySameMonthBeforeOrder, null);
         assertEquals(OrderValidationCode.EXPIRY_DATE_INVALID, validatedOrder2.getOrderValidationCode());
     }
@@ -126,14 +116,11 @@ public class OrderValidatorTest
                 )
         );
         OrderValidator orderValidator = new OrderValidator();
-        // order validator returns an order with a defined order validation code
         Order validatedOrder = orderValidator.validateOrder(orderCVVInvalid, null);
         assertEquals(OrderValidationCode.CVV_INVALID, validatedOrder.getOrderValidationCode());
     }
 
     public void testingTotalIncorrect(){
-        // making sure the total is greater than deliver fee
-        // generating order
         Order orderTotalIncorrect = new Order();
         orderTotalIncorrect.setOrderDate(LocalDate.of(2023, 9, 1));
         orderTotalIncorrect.setCreditCardInformation(
@@ -148,33 +135,42 @@ public class OrderValidatorTest
         Pizza pizza2 = new Pizza("Pizza B", 2000);
         Pizza pizza3 = new Pizza("Pizza C", 3000);
         Pizza pizza4 = new Pizza("Pizza D", 4000);
-        // adding pizza to order
         orderTotalIncorrect.setPizzasInOrder(new Pizza[]{pizza1, pizza2, pizza3, pizza4});
-        // setting total price
         orderTotalIncorrect.setPriceTotalInPence(-1 + SystemConstants.ORDER_CHARGE_IN_PENCE);
-        // generating order validator
         OrderValidator orderValidator = new OrderValidator();
-        // order validator returns an order with a defined order validation code
         Order validatedOrder = orderValidator.validateOrder(orderTotalIncorrect, null);
         assertEquals(OrderValidationCode.TOTAL_INCORRECT, validatedOrder.getOrderValidationCode());
-        // testing that total of all pizza costs + delivery fee = total price
 
     }
 
-    public void testingPizzaUndefined(){
+    public void testingPizzaRestaurant(){
+        // creating an order where one of the pizzas is undefined
+        Order orderPizzaUndefined = new Order();
+        orderPizzaUndefined.setOrderDate(LocalDate.of(2023, 10, 12));
+        orderPizzaUndefined.setCreditCardInformation(
+                new CreditCardInformation(
+                        "1212121212121212",
+                        "09/28",
+                        "222"
+                )
+        );
+        // generating pizza
+        Pizza pizza1 = new Pizza("Pizza A", 1000);
+        Pizza pizza2 = new Pizza("Pizza B", 2000);
+        Pizza pizza3 = new Pizza("Pizza C", 3000);
+        Pizza pizza4 = new Pizza("Pizza D", 4000);
 
-    }
+        orderPizzaUndefined.setPizzasInOrder(new Pizza[]{pizza1, pizza2});
+        LngLat restaurantLocation = new LngLat(-3.184319, 55.942617);
+        DayOfWeek[] openingDays = new DayOfWeek[]{DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY};
+        Restaurant restaurant1 = new Restaurant("Restaurant A", restaurantLocation, openingDays, new Pizza[]{pizza3, pizza2});
+        Restaurant restaurant2 = new Restaurant("Restaurant B", restaurantLocation, openingDays, new Pizza[]{pizza1, pizza4});
 
-    // Restaurant Related Checks
-    public void testingPizzaFromMultipleRestaurants(){
-
-    }
-
-    public void testingRestaurantClosed(){
-
-    }
-
-    public void testingGoodOrder(){
+        Restaurant[] restaurants = new Restaurant[]{restaurant2, restaurant1};
+        orderPizzaUndefined.setPriceTotalInPence(3000 + SystemConstants.ORDER_CHARGE_IN_PENCE);
+        OrderValidator orderValidator = new OrderValidator();
+        Order validatedOrder = orderValidator.validateOrder(orderPizzaUndefined, restaurants);
+        assertEquals(OrderValidationCode.PIZZA_FROM_MULTIPLE_RESTAURANTS, validatedOrder.getOrderValidationCode());
 
     }
 
