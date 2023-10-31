@@ -13,6 +13,8 @@ import uk.ac.ed.inf.ilp.data.Order;
 /**
  * A very simple client to GET JSON data from a remote server
  */
+
+
 public class REST_Client {
     private static final String BASE = "https://ilp-rest.azurewebsites.net";
     // Endpoints
@@ -52,10 +54,7 @@ public class REST_Client {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
         // getting the orders for a given day
-
-        // insantiating a localdate object
         LocalDate date = LocalDate.of(2023, 9, 1);
         String dateAsString = date.toString();
 
