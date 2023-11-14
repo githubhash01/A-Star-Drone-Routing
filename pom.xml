@@ -23,6 +23,28 @@
       <version>3.8.1</version>
       <scope>test</scope>
     </dependency>
+
+      <!-- Jackson Databind for ObjectMapper -->
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>2.13.1</version> <!-- Use the latest version available -->
+      </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+      <version>2.13.1</version> <!-- Use the latest version available -->
+    </dependency>
+
+    <dependency>
+      <groupId>com.mapbox.mapboxsdk</groupId>
+      <!-- Replace `DESIRED_JAVA_SDK_PACKAGE` with the name of an available package:
+           https://docs.mapbox.com/android/java/guides/#available-packages -->
+      <artifactId>mapbox-sdk-geojson</artifactId>
+      <version>5.6.0</version>
+    </dependency>
+
   </dependencies>
 
 </project>
