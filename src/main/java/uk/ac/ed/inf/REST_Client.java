@@ -26,6 +26,14 @@ public class REST_Client {
     private static final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
 
+    public boolean isAlive(){
+        try {
+            String isAlive =  mapper.readValue(new URL(BASE), String.class);
+            return isAlive.equals("true");
+        } catch (IOException e) {
+            return false;
+        }
+    }
     public Restaurant[] fetchRestaurants() {
         try {
             return mapper.readValue(new URL(RESTAURANT_URL), Restaurant[].class);

@@ -71,6 +71,8 @@ public class RouterTest  extends TestCase
         Router router = new Router(noFlyZones, centralArea, appleton, restaurants);
         Drone drone = new Drone(router, flightpath, deliveries);
 
+        // just get the first two orders
+        Order[] restrictedOrders = {orders[1]};;
         // let the drone deliver the all the orders of the day
         for (Order order : orders){
             // get the drone to deliver the order

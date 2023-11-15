@@ -73,7 +73,7 @@ public class A_Star {
                 // otherwise
                 else{
                     // the g value of the next cell is the current cell's g value plus the distance between the two cells
-                    double tentativeG = current.g + lngLatHandler.distanceTo(current.lngLat, nextLngLat);
+                    double tentativeG = current.g + euclideanHeuristic(current, new Cell(nextLngLat));
                     // find the cell if it is in the frontier but not visited to see if cost updating is needed
                     Cell existing_neighbor = findNeighbor(nextLngLat);
 
@@ -85,7 +85,7 @@ public class A_Star {
                             existing_neighbor.parent = current;
                             existing_neighbor.dir = dir;
                             existing_neighbor.g = tentativeG;
-                            existing_neighbor.h = heuristic(existing_neighbor, goal);
+                            existing_neighbor.h = euclideanHeuristic(existing_neighbor, goal);
                             existing_neighbor.f = existing_neighbor.g + existing_neighbor.h;
                         }
                     }
@@ -95,7 +95,7 @@ public class A_Star {
                         neighbor.parent = current;
                         neighbor.dir = dir;
                         neighbor.g = tentativeG;
-                        neighbor.h = heuristic(neighbor, goal);
+                        neighbor.h = euclideanHeuristic(neighbor, goal);
                         neighbor.f = neighbor.g + neighbor.h;
                         openSet.add(neighbor);
                     }
@@ -157,7 +157,7 @@ public class A_Star {
                 // otherwise
                 else{
                     // the g value of the next cell is the current cell's g value plus the distance between the two cells
-                    double tentativeG = current.g + lngLatHandler.distanceTo(current.lngLat, nextLngLat);
+                    double tentativeG = current.g + euclideanHeuristic(current, new Cell(nextLngLat));
                     // find the cell if it is in the frontier but not visited to see if cost updating is needed
                     Cell existing_neighbor = findNeighbor(nextLngLat);
 
@@ -169,7 +169,7 @@ public class A_Star {
                             existing_neighbor.parent = current;
                             existing_neighbor.dir = dir;
                             existing_neighbor.g = tentativeG;
-                            existing_neighbor.h = heuristic(existing_neighbor, goal);
+                            existing_neighbor.h = euclideanHeuristic(existing_neighbor, goal);
                             existing_neighbor.f = existing_neighbor.g + existing_neighbor.h;
                         }
                     }
@@ -179,7 +179,7 @@ public class A_Star {
                         neighbor.parent = current;
                         neighbor.dir = dir;
                         neighbor.g = tentativeG;
-                        neighbor.h = heuristic(neighbor, goal);
+                        neighbor.h = euclideanHeuristic(neighbor, goal);
                         neighbor.f = neighbor.g + neighbor.h;
                         openSet.add(neighbor);
                     }
@@ -213,8 +213,44 @@ public class A_Star {
         return find;
     }
 
+
+    public static double centralAreaHeuristic(NamedRegion centralArea, Cell a) {
+        // TODO implement this
+        /**
+         * Goes through every edge of the named region
+         * For each edge, find the distance to the closest edge to cell a
+         * Return the minimum distance
+         */
+        double shortestDistance = Double.MAX_VALUE;
+        LngLat x = a.lngLat;
+        double x0 = x.lng();
+        double y0 = x.lat();
+        int N = centralArea.vertices().length;
+
+        LngLat[][] edges = new LngLat[N][2];
+        // print the number of vertices
+        for (int i = 0; i < N - 1; i++){
+            LngLat P1 = centralArea.vertices()[i];
+            double x1 = P1.lng();
+            double y1 = P1.lat();
+            LngLat P2 = centralArea.vertices()[(i+1)%N];
+            double x2 = P2.lng();
+            double y2 = P2.lat();
+
+            // find the distance from the cell to the edge
+            double numerator = Math.abs((x2-x1)*(y1-y0)-(x1-x0)*(y2-y1));
+            double denominator = Math.sqrt(Math.pow((x2-x1), 2) + Math.pow((y2-y1), 2));
+            double distance = numerator/denominator;
+
+            // if the distance is smaller than the shortest distance, then update the shortest distance
+            if (distance < shortestDistance){
+                shortestDistance = distance;
+            }
+        }
+        return shortestDistance;
+    }
     // Heuristic function that uses Euclidean distance
-    public static double heuristic(Cell a, Cell b) {
+    public static double euclideanHeuristic(Cell a, Cell b) {
         return lngLatHandler.distanceTo(a.lngLat, b.lngLat);
     }
 
@@ -222,17 +258,6 @@ public class A_Star {
         // initialize the global variable
         openSet = new PriorityQueue<>(Comparator.comparingDouble(c -> c.f));
         closedSet = new HashSet<>();
-        /*
-        // Run A* search
-        if(findShortestPath(noFlyZones, centralArea, start, goal)){
-            // print the path by going through the path list and printing the lngLat
-            return path;
-        }
-        else{
-            System.out.println("No path found");
-        }
-        return null;
-        */
 
         // first find the path to the central area
         if(findPathToCentral(noFlyZones, centralArea, start, goal)){
@@ -240,8 +265,6 @@ public class A_Star {
             System.out.println("Found path to central area");
             openSet = new PriorityQueue<>(Comparator.comparingDouble(c -> c.f));
             closedSet = new HashSet<>();
-            //path = new ArrayList<>();
-
         }
         else{
             System.out.println("No path found");
@@ -249,13 +272,7 @@ public class A_Star {
 
         // now find the path to the goal starting from the central area
         if(findShortestPath(noFlyZones, centralArea, centralStart, goal)){
-            // print the path by going through the path list and printing the lngLat
             return path;
-            /*
-            pathToCentral.addAll(path);
-            return pathToCentral;
-
-             */
         }
         else{
             System.out.println("No path found");
