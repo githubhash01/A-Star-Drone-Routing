@@ -1,4 +1,5 @@
 package uk.ac.ed.inf;
+import uk.ac.ed.inf.ilp.constant.SystemConstants;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
 import uk.ac.ed.inf.ilp.data.LngLat;
 import java.util.*;
@@ -9,10 +10,7 @@ public class A_Star {
     public static LngLatHandler lngLatHandler = new LngLatHandler();
     // an array with possible movement directions in degrees ranging from 0-360 in 22.5 degree increments
 
-    // TODO change this to 16 directions
-
-    private static final double[] RESTRICTED_DIRS = {0, 45, 90, 135, 180, 225, 270, 315};
-    private static final double[] DIRS = {0,22.5, 45, 67.5, 90, 112.5, 135, 157.5, 180, 202.5, 225, 247.5, 270, 292.5, 315, 337.5};
+    private static final double[] DIRS = {0, 22.5, 45, 67.5, 90, 112.5, 135, 157.5, 180, 202.5, 225, 247.5, 270, 292.5, 315, 337.5};
 
     // global defined variables for the search
     static PriorityQueue<Cell> openSet;     // frontier
@@ -31,11 +29,6 @@ public class A_Star {
 
             // get the cell with the lowest cost
             Cell current = openSet.poll();
-
-            /**
-             * If the cell is inside the central area then we have found the path to the central area
-             * Early exit
-             */
 
             if (lngLatHandler.isInRegion(current.lngLat, centralArea)) {
                 centralStart = current;
@@ -73,7 +66,7 @@ public class A_Star {
                 // otherwise
                 else{
                     // the g value of the next cell is the current cell's g value plus the distance between the two cells
-                    double tentativeG = current.g + euclideanHeuristic(current, new Cell(nextLngLat));
+                    double tentativeG = current.g + SystemConstants.DRONE_MOVE_DISTANCE;
                     // find the cell if it is in the frontier but not visited to see if cost updating is needed
                     Cell existing_neighbor = findNeighbor(nextLngLat);
 
@@ -99,11 +92,8 @@ public class A_Star {
                         neighbor.f = neighbor.g + neighbor.h;
                         openSet.add(neighbor);
                     }
-
                 }
-
             }
-
         }
         // No path found
         return false;
@@ -157,7 +147,7 @@ public class A_Star {
                 // otherwise
                 else{
                     // the g value of the next cell is the current cell's g value plus the distance between the two cells
-                    double tentativeG = current.g + euclideanHeuristic(current, new Cell(nextLngLat));
+                    double tentativeG = current.g + SystemConstants.DRONE_MOVE_DISTANCE;
                     // find the cell if it is in the frontier but not visited to see if cost updating is needed
                     Cell existing_neighbor = findNeighbor(nextLngLat);
 
@@ -183,11 +173,8 @@ public class A_Star {
                         neighbor.f = neighbor.g + neighbor.h;
                         openSet.add(neighbor);
                     }
-
                 }
-
             }
-
         }
         // No path found
         return false;

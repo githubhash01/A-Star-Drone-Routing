@@ -219,4 +219,26 @@ public class OrderValidator implements OrderValidation {
         DayOfWeek[] openingDays = restaurant.openingDays();
         return !Arrays.asList(openingDays).contains(orderDay);
     }
+
+    /**
+     * Additional Helper Function for CW2
+     */
+
+    // loop through all the restaurants and find the one that matches the order
+    public Restaurant getRestaurant(Restaurant[] restaurants, Order order) {
+        // get a pizza from the order
+        Pizza pizza = order.getPizzasInOrder()[0];
+        // go through all the restaurants and find the one that matches the pizza
+        for (Restaurant restaurant : restaurants) {
+            for (Pizza restaurantPizza : restaurant.menu()) {
+                if (pizza.equals(restaurantPizza)){
+                    return restaurant;
+                }
+            }
+        }
+
+        // fail gracefully by printing something to the console
+        System.out.println("No restaurant found for the order: " + order.getOrderNo());
+        return null;
+    }
 }

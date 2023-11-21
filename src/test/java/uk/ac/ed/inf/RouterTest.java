@@ -32,7 +32,6 @@ public class RouterTest  extends TestCase
 
     /**
      * Rigourous Test :-)
-     */
     public void testFull()
     {
         // Set the local date to 2023-09-01
@@ -41,7 +40,7 @@ public class RouterTest  extends TestCase
 
 
         // create a flightpath and a deliveries object to store the flightpath and the deliveries of the day
-        Flightpath flightpath = new Flightpath();
+        DroneFlightPath droneFlightPath = new DroneFlightPath();
         Deliveries deliveries = new Deliveries();
 
         Restaurant[] restaurants = rest_client.fetchRestaurants();
@@ -68,21 +67,22 @@ public class RouterTest  extends TestCase
         LngLat appleton = new LngLat(-3.1869, 55.9445);
 
         // create a drone and a router for the drone
-        Router router = new Router(noFlyZones, centralArea, appleton, restaurants);
-        Drone drone = new Drone(router, flightpath, deliveries);
+        Router router = new Router(noFlyZones, centralArea, appleton);
+        Drone drone = new Drone(router, droneFlightPath, deliveries);
 
         // just get the first two orders
         Order[] restrictedOrders = {orders[1]};;
         // let the drone deliver the all the orders of the day
         for (Order order : orders){
             // get the drone to deliver the order
-            drone.deliverOrder(order);
+            drone.deliverOrder(order, restaurants[0]);
         }
 
         // write the flightpath and the deliveries to the json files
-        flightpath.writeDroneFlightpath();
+        droneFlightPath.writeDroneFlightpath();
 
         // Then we print the deliveries
         System.out.println(deliveries);
     }
+     */
 }

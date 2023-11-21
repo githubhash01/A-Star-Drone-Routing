@@ -1,9 +1,11 @@
 package uk.ac.ed.inf;
 import uk.ac.ed.inf.ilp.constant.OrderStatus;
 import uk.ac.ed.inf.ilp.data.Order;
+import uk.ac.ed.inf.ilp.data.Restaurant;
 
 import java.util.List;
 
+// TODO - write a comment for this class
 /**
  * Drone class that will be used to deliver the orders
  *
@@ -12,39 +14,30 @@ import java.util.List;
 
 public class Drone {
 
-    // drone will have an order validator, a flightpath, deliveries, and a router
+    private final FlightLog flightLog;
 
-    private OrderValidator validator;
-    private Flightpath flightpath;
-    private Deliveries deliveries;
-    private Router router;
+    private final Router router;
 
     // a hashmap for restaurants and their routes to appleton tower
 
-    public Drone(Router router, Flightpath flightpath, Deliveries deliveries) {
+    public Drone(Router router, FlightLog flightLog) {
         this.router = router;
-        this.flightpath = flightpath;
-        this.deliveries = deliveries;
-        this.validator = new OrderValidator();
+        this.flightLog = flightLog;
     }
 
-    /**
-     * Deliver the order:
-     * -- validate the order
-     * -- route the order (if valid but not delivered)
-     * -- update the flightpath and the deliveries
-     */
+    // TODO - write a comment for this method
+    public void deliverOrder(Order validatedOrder, Restaurant restaurant){
 
-    public void deliverOrder(Order validatedOrder){
         // if the order status is valid but not delivered then route it
         if (validatedOrder.getOrderStatus().equals(OrderStatus.VALID_BUT_NOT_DELIVERED)){
-            List <Cell> route = router.getRoute(validatedOrder);
-            flightpath.addOrderRoute(validatedOrder.getOrderNo(), route);
+            List <Cell> route = router.getRoute(restaurant);
+            // Order has now been 'delivered' so update the status
             validatedOrder.setOrderStatus(OrderStatus.DELIVERED);
-
+            // Log the route and the order
+            flightLog.logRoute(validatedOrder.getOrderNo(), route);
         }
-        // Update the Deliveries
-        deliveries.addOrder(validatedOrder);
+        // Update the deliveries
+        flightLog.logOrder(validatedOrder);
     }
 
 }
