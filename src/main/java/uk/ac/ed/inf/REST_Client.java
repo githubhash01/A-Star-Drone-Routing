@@ -15,28 +15,41 @@ import uk.ac.ed.inf.ilp.data.Order;
  */
 
 public class REST_Client {
-    private static final String BASE = "https://ilp-rest.azurewebsites.net";
+    private final String BASE;
     // Endpoints
-    private static final String CENTRAL_AREA_URL = BASE + "/centralArea";
-    public static final String NO_FLY_ZONES_URL = BASE + "/noFlyZones";
-    public static final String RESTAURANT_URL = BASE + "/restaurants";
-    public static final String ORDERS = BASE + "/orders";
+
+    private final String ISALIVE;
+    private final String CENTRAL_AREA_URL;
+    public final String NO_FLY_ZONES_URL;
+    public final String RESTAURANT_URL;
+    public final String ORDERS;
 
     private static final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
+    public REST_Client(String url) {
+        	BASE = url;
+            ISALIVE = url + "/isAlive";
+            CENTRAL_AREA_URL = url + "/centralArea";
+            NO_FLY_ZONES_URL = url + "/noFlyZones";
+            RESTAURANT_URL = url + "/restaurants";
+            ORDERS = url + "/orders";
+    }
 
     public boolean isAlive(){
         try {
-            String isAlive =  mapper.readValue(new URL(BASE), String.class);
+            String isAlive =  mapper.readValue(new URL(ISALIVE), String.class);
             return isAlive.equals("true");
         } catch (IOException e) {
+            System.out.println("Error checking if server is alive");
             return false;
         }
     }
+
     public Restaurant[] fetchRestaurants() {
         try {
             return mapper.readValue(new URL(RESTAURANT_URL), Restaurant[].class);
         } catch (IOException e) {
+            System.out.println("Error fetching restaurants");
             throw new RuntimeException(e);
         }
     }
@@ -45,6 +58,7 @@ public class REST_Client {
         try {
             return mapper.readValue(new URL(CENTRAL_AREA_URL), NamedRegion.class);
         } catch (IOException e) {
+            System.out.println("Error fetching central area");
             throw new RuntimeException(e);
         }
     }
@@ -53,6 +67,7 @@ public class REST_Client {
         try {
             return mapper.readValue(new URL(NO_FLY_ZONES_URL), NamedRegion[].class);
         } catch (IOException e) {
+            System.out.println("Error fetching no fly zones");
             throw new RuntimeException(e);
         }
     }
@@ -62,6 +77,7 @@ public class REST_Client {
         try {
             return mapper.readValue(new URL(ORDERS + "/" + date.toString()), Order[].class);
         } catch (IOException e) {
+            System.out.println("Error fetching orders");
             throw new RuntimeException(e);
         }
 

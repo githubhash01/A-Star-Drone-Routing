@@ -12,29 +12,37 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 // import ObjectMapper from jackson databind
 import com.fasterxml.jackson.databind.ObjectMapper;
-import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.Order;
 
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Flightpath Class
- * -- A class for holding the flightpath data
+ * FlightLog Class
+ * -- A class for holding the flightpath data: deliveries, flightpath and drone flightpath (geojson)
  * -- Method for adding routes to the flightpath
- * -- Method for output of flightpath to json
+ * -- Method for adding of deliveries to json
+ * -- Method for output of each file
  */
 
 public class FlightLog {
-
-    // initialise the flightpath List<Cell> as null
-
     public List<Delivery> deliveries = new ArrayList<>();
     public List<Move> flightPath = new ArrayList<>();
     public List<Cell> droneFlightPath = new ArrayList<>();
+    private final String deliveries_file_path;
+    private final String flightpath_file_path;
+    private final String drone_flightpath_file_path;
+
+    public FlightLog(LocalDate date) {
+        String base_url = "src/main/java/uk/ac/ed/inf/resultfiles/";
+        this.deliveries_file_path = base_url + "deliveries-" + date + ".json";
+        this.flightpath_file_path = base_url + "flightpath-" + date + ".json";
+        this.drone_flightpath_file_path = base_url + "drone-"+ date + ".geojson";
+    }
 
     public void logOrder(Order order){
         Delivery delivery = new Delivery(order.getOrderNo(), order.getOrderStatus().toString(), order.getOrderValidationCode().toString(), order.getPriceTotalInPence());
@@ -55,18 +63,16 @@ public class FlightLog {
         // Convert list to JSON string
         String json = mapper.writeValueAsString(deliveries);
         // Then writes the json records to the file
-        writeJSON(json, "src/main/java/uk/ac/ed/inf/resultfiles/deliveries.json");
+        writeJSON(json, this.deliveries_file_path);
     }
 
     public void writeFlightpath() throws JsonProcessingException {
         // Takes the list of moves and makes it a list of JSon records
         ObjectMapper mapper = new ObjectMapper();
-
         // Convert list to JSON string
         String json = mapper.writeValueAsString(flightPath);
         // Then writes the json records to the file
-
-        writeJSON(json, "src/main/java/uk/ac/ed/inf/resultfiles/flightpath.json");
+        writeJSON(json, this.flightpath_file_path);
     }
 
     // write the drone flightpath to the file
@@ -92,7 +98,6 @@ public class FlightLog {
             // Create a FeatureCollection and add the Feature to it
             FeatureCollection featureCollection = new FeatureCollection();
             featureCollection.add(feature);
-
             // Use the Jackson ObjectMapper to map the Feature Collection to a JSON string
             ObjectMapper mapper = new ObjectMapper();
             flightpathJson = mapper.writeValueAsString(featureCollection);
@@ -100,10 +105,8 @@ public class FlightLog {
         catch (JsonProcessingException e) {
             System.out.println("Error converting drone path to geoJson");
         }
-
         // write the json string to the file
-        writeJSON(flightpathJson, "src/main/java/uk/ac/ed/inf/resultfiles/drone.geojson");
-
+        writeJSON(flightpathJson, this.drone_flightpath_file_path);
     }
 
     private void writeJSON(String json, String filePath) {
@@ -115,4 +118,5 @@ public class FlightLog {
             System.out.println("Error writing JSON to file");;
         }
     }
+
 }

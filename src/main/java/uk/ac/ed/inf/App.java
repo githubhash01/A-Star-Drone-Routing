@@ -2,9 +2,11 @@ package uk.ac.ed.inf;
 
 // import the CentralRegionVertexOrder class from the ilp project
 import com.fasterxml.jackson.core.JsonProcessingException;
+import uk.ac.ed.inf.ilp.constant.OrderStatus;
 import uk.ac.ed.inf.ilp.data.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * The main class of the project that contains the main method
@@ -12,46 +14,98 @@ import java.time.LocalDate;
 public class App 
 {
 
-    public static void main(String[] args) throws JsonProcessingException {
-        // TODO allow the user to specify the date from the command line
-        // in the mean time, hard code the date to 2023-09-01
-        LocalDate date = LocalDate.parse("2023-11-15");
+    static private final LngLat APPLETON = new LngLat(-3.1869, 55.9445);
+    static private Order[] orders;
+    static private NamedRegion[] noFlyZones;
+    static private NamedRegion centralArea;
+    static private Restaurant[] restaurants;
+    static private FlightLog flightLog;
+    static private LocalDate date;
+    static private REST_Client restClient;
 
-        // hard code the appleton tower location TODO - make this come from constant
-        LngLat appleton = new LngLat(-3.1869, 55.9445);
+    public static void main(String[] args){
 
-        // create a flight log
-        FlightLog flightLog = new FlightLog();
+        // validate the input parameters
+        validateInputParameters(args);
+        // initialise the flight log
+        flightLog = new FlightLog(date);
+        // get the data from the REST service
+        fetchRESTData();
+        // deliver the orders
+        deliverOrders();
+        // output the flight logs
+        outputFlightLogs();
+    }
 
+    private static void fetchRESTData(){
         // fetch the orders, no-fly zones, central area and restaurants from the REST service
-        REST_Client restClient = new REST_Client();
-        Order[] orders = restClient.fetchOrders(date);
+        orders = restClient.fetchOrders(date);
+        noFlyZones = restClient.fetchNoFlyZones();
+        centralArea = restClient.fetchCentralArea();
+        restaurants = restClient.fetchRestaurants();
+    }
 
-        NamedRegion[] noFlyZones = restClient.fetchNoFlyZones();
-        NamedRegion centralArea = restClient.fetchCentralArea();
-        Restaurant[] restaurants = restClient.fetchRestaurants();
-
-        // create a drone and a router for the drone
-        Router router = new Router(noFlyZones, centralArea, appleton);
-        Drone drone = new Drone(router, flightLog);
-
-        // create an order validator
+    private static void deliverOrders(){
         OrderValidator orderValidator = new OrderValidator();
-
-        // let the drone deliver the all the orders of the day
+        RoutePlanner routePlanner = new RoutePlanner(noFlyZones, centralArea, APPLETON);
         for (Order order : orders){
             // validate the order
             Order validatedOrder = orderValidator.validateOrder(order, restaurants);
             // get the restaurant that matches the order
             Restaurant restaurant = orderValidator.getRestaurant(restaurants, validatedOrder);
-            // get the drone to deliver the validated order from the restaurant
-            drone.deliverOrder(validatedOrder, restaurant);
+            // if the order status is valid but not delivered then route it
+            if (validatedOrder.getOrderStatus().equals(OrderStatus.VALID_BUT_NOT_DELIVERED)){
+                List<Cell> route = routePlanner.getRoute(restaurant);
+                // Order has now been 'delivered' so update the status
+                validatedOrder.setOrderStatus(OrderStatus.DELIVERED);
+                // Log the route and the order
+                flightLog.logRoute(validatedOrder.getOrderNo(), route);
+            }
+            // update the deliveries with the order whether it was delivered or not
+            flightLog.logOrder(validatedOrder);
+        }
+    }
+
+    // writes the flight log as the 3 json output files
+    private static void outputFlightLogs(){
+        try {
+            flightLog.writeDeliveries();
+            flightLog.writeFlightpath();
+            flightLog.writeDroneFlightpath();
+        } catch (JsonProcessingException e) {
+            System.out.println("Error writing flight logs");
+            System.exit(1);
+        }
+    }
+
+
+    private static void validateInputParameters(String[] args){
+        // validate the input parameters
+        if (args.length != 2){
+            System.out.println("Error: Incorrect number of arguments");
+            System.exit(1);
         }
 
-        // write the flightpath and the deliveries to the json files
-        flightLog.writeDroneFlightpath();
-        flightLog.writeFlightpath();
-        flightLog.writeDeliveries();
+        date = LocalDate.parse(args[0]);
+        String url = args[1];
+
+        // if the date occurs before 2023-09-01 or strictly after 2024-01-28 then exit with an error
+        if (date.isBefore(LocalDate.parse("2023-09-01")) || date.isAfter(LocalDate.parse("2024-01-28"))){
+            System.out.println("Error: Date must be between 2023-09-01 and 2024-01-28");
+            System.exit(1);
+        }
+        // attempt the 'isAlive' check on the url
+        restClient = new REST_Client(url);
+        System.out.println(url);
+        if (!restClient.isAlive()){
+            System.out.println("Error: could not reach the server");
+            System.exit(1);
+        }
+        else{
+            System.out.println("URL is active");
+        }
 
     }
+
+
 }

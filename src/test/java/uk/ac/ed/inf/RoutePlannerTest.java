@@ -10,14 +10,14 @@ import uk.ac.ed.inf.ilp.data.*;
 
 import java.time.LocalDate;
 
-public class RouterTest  extends TestCase
+public class RoutePlannerTest extends TestCase
 {
     /**
      * Create the test case
      *
      * @param testName name of the test case
      */
-    public RouterTest( String testName )
+    public RoutePlannerTest(String testName )
     {
         super( testName );
     }

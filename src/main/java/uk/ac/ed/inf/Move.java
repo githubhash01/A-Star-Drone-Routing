@@ -29,8 +29,11 @@ public class Move {
         this.toLatitude = to.lat();
         this.angle = getAngle(fromLongitude, fromLatitude, toLongitude, toLatitude);
     }
-
     private double getAngle(double fromLongitude, double fromLatitude, double toLongitude, double toLatitude){
+        // if the drone did not move, we know it was hovering so the angle is set to 999
+        if (fromLongitude == toLongitude && fromLatitude == toLatitude){
+            return 999;
+        }
         // find the angle between the 'from' point -> infinite east and the line between the two points
         double angle = Math.atan2(toLatitude - fromLatitude, toLongitude - fromLongitude);
 
@@ -41,6 +44,7 @@ public class Move {
         // convert to degrees and round to the closest 22.5-degree angle
         angle = Math.round(Math.toDegrees(angle)/22.5)*22.5;
         return angle;
+
     }
 
 

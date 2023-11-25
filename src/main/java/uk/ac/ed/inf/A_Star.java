@@ -17,91 +17,9 @@ public class A_Star {
     static HashSet<Cell> closedSet;         // visited
     static List<Cell> path;                 // resulting path
 
-    static Cell centralStart; //
-
-    // A* search algorithm for getting inside the central area from outside the central area
-    public static boolean findPathToCentral(NamedRegion[] noFlyZones, NamedRegion centralArea,  Cell start, Cell goal){
-        // add start to the queue first
-        openSet.add(start);
-
-        // once there is element in the queue, then keep running
-        while (!openSet.isEmpty()){
-
-            // get the cell with the lowest cost
-            Cell current = openSet.poll();
-
-            if (lngLatHandler.isInRegion(current.lngLat, centralArea)) {
-                centralStart = current;
-                path = new ArrayList<>();
-                while (current != null) {
-                    path.add(current);
-                    current = current.parent;
-                }
-                Collections.reverse(path);
-                return true;
-            }
-            // mark the cell to be visited
-            closedSet.add(current);
-
-            // search neighbours i.e. all possible directions in all angles
-            for(double dir : DIRS){
-                // get the next location
-                LngLat nextLngLat = lngLatHandler.nextPosition(current.lngLat, dir);
-
-                // check to see if the next location is in any of the no-fly zones
-                boolean isInNoFlyZone = false;
-                if (noFlyZones != null) {
-                    for (NamedRegion noFlyZone : noFlyZones) {
-                        if (lngLatHandler.isInRegion(nextLngLat, noFlyZone)) {
-                            isInNoFlyZone = true;
-                            break;
-                        }
-                    }
-                }
-                // if the next location is in a no-fly zone, then skip it
-                if(isInNoFlyZone || closedSet.contains(new Cell(nextLngLat))) {
-                    continue;
-                }
-
-                // otherwise
-                else{
-                    // the g value of the next cell is the current cell's g value plus the distance between the two cells
-                    double tentativeG = current.g + SystemConstants.DRONE_MOVE_DISTANCE;
-                    // find the cell if it is in the frontier but not visited to see if cost updating is needed
-                    Cell existing_neighbor = findNeighbor(nextLngLat);
-
-                    // if the neighbor is not in the frontier, then add it to the frontier
-                    if(existing_neighbor != null){
-                        // Check if this path is better than any previously generated path to the neighbor
-                        if(tentativeG < existing_neighbor.g){
-                            // update cost, parent information
-                            existing_neighbor.parent = current;
-                            existing_neighbor.dir = dir;
-                            existing_neighbor.g = tentativeG;
-                            existing_neighbor.h = euclideanHeuristic(existing_neighbor, goal);
-                            existing_neighbor.f = existing_neighbor.g + existing_neighbor.h;
-                        }
-                    }
-                    else{
-                        // or directly add this cell to the frontier
-                        Cell neighbor = new Cell(nextLngLat);
-                        neighbor.parent = current;
-                        neighbor.dir = dir;
-                        neighbor.g = tentativeG;
-                        neighbor.h = euclideanHeuristic(neighbor, goal);
-                        neighbor.f = neighbor.g + neighbor.h;
-                        openSet.add(neighbor);
-                    }
-                }
-            }
-        }
-        // No path found
-        return false;
-
-    }
 
     // A* search algorithm for inside the central area
-    public static boolean findShortestPath(NamedRegion[] noFlyZones, NamedRegion centralArea,  Cell start, Cell goal){
+    public static boolean findShortestPath(NamedRegion[] noFlyZones, NamedRegion centralArea,  Cell start, Cell goal, Boolean breakOnCenter){
         // add start to the queue first
         openSet.add(start);
 
@@ -110,12 +28,25 @@ public class A_Star {
 
             // get the cell with the lowest cost
             Cell current = openSet.poll();
-
             // mark the cell to be visited
             closedSet.add(current);
-            // find the goal: early exit
-            if(lngLatHandler.isCloseTo(current.lngLat, goal.lngLat)){
-            // Reconstruct the path: trace by find the parent cell
+
+            // if we want to break on center, then check if we are in the center
+            if (breakOnCenter){
+                if (lngLatHandler.isInRegion(current.lngLat, centralArea)){
+                    path = new ArrayList<>();
+                    while (current != null) {
+                        path.add(current);
+                        current = current.parent;
+                    }
+                    Collections.reverse(path);
+                    return true;
+                }
+            }
+
+
+            // otherwise, we want to go directly to the goal: early exit
+            if (lngLatHandler.isCloseTo(current.lngLat, goal.lngLat)) {
                 path = new ArrayList<>();
                 while (current != null) {
                     path.add(current);
@@ -124,12 +55,12 @@ public class A_Star {
                 Collections.reverse(path);
                 return true;
             }
+
             // search neighbours i.e. all possible directions in all angles
             for(double dir : DIRS){
                 // get the next location
                 LngLat nextLngLat = lngLatHandler.nextPosition(current.lngLat, dir);
 
-                // check to see if the next location is in any of the no-fly zones
                 boolean isInNoFlyZone = false;
                 if (noFlyZones != null) {
                     for (NamedRegion noFlyZone : noFlyZones) {
@@ -139,10 +70,19 @@ public class A_Star {
                         }
                     }
                 }
-                // if the next location is in a no-fly zone, then skip it
+
+                // if break on center is false, then we must also check that we are not exiting the center
+                if (!breakOnCenter && !lngLatHandler.isInRegion(nextLngLat, centralArea)){
+                    continue;
+                }
+
+                //boolean inCentralArea = lngLatHandler.isInRegion(nextLngLat, centralArea);
+                // if the next location is in a no-fly zone, or outside central area, then skip it
                 if(isInNoFlyZone || closedSet.contains(new Cell(nextLngLat))) {
                     continue;
                 }
+
+
 
                 // otherwise
                 else{
@@ -200,71 +140,24 @@ public class A_Star {
         return find;
     }
 
-
-    public static double centralAreaHeuristic(NamedRegion centralArea, Cell a) {
-        // TODO implement this
-        /**
-         * Goes through every edge of the named region
-         * For each edge, find the distance to the closest edge to cell a
-         * Return the minimum distance
-         */
-        double shortestDistance = Double.MAX_VALUE;
-        LngLat x = a.lngLat;
-        double x0 = x.lng();
-        double y0 = x.lat();
-        int N = centralArea.vertices().length;
-
-        LngLat[][] edges = new LngLat[N][2];
-        // print the number of vertices
-        for (int i = 0; i < N - 1; i++){
-            LngLat P1 = centralArea.vertices()[i];
-            double x1 = P1.lng();
-            double y1 = P1.lat();
-            LngLat P2 = centralArea.vertices()[(i+1)%N];
-            double x2 = P2.lng();
-            double y2 = P2.lat();
-
-            // find the distance from the cell to the edge
-            double numerator = Math.abs((x2-x1)*(y1-y0)-(x1-x0)*(y2-y1));
-            double denominator = Math.sqrt(Math.pow((x2-x1), 2) + Math.pow((y2-y1), 2));
-            double distance = numerator/denominator;
-
-            // if the distance is smaller than the shortest distance, then update the shortest distance
-            if (distance < shortestDistance){
-                shortestDistance = distance;
-            }
-        }
-        return shortestDistance;
-    }
     // Heuristic function that uses Euclidean distance
     public static double euclideanHeuristic(Cell a, Cell b) {
         return lngLatHandler.distanceTo(a.lngLat, b.lngLat);
     }
 
-    public static List<Cell> runA_Star(NamedRegion[] noFlyZones, NamedRegion centralArea, Cell start, Cell goal){
+    public static List<Cell> runA_Star(NamedRegion[] noFlyZones, NamedRegion centralArea, Cell start, Cell goal, Boolean breakOnCenter){
         // initialize the global variable
+        List<Cell> first = new ArrayList<>();
         openSet = new PriorityQueue<>(Comparator.comparingDouble(c -> c.f));
         closedSet = new HashSet<>();
 
-        // first find the path to the central area
-        if(findPathToCentral(noFlyZones, centralArea, start, goal)){
-            // print something to show we are doing something here
-            System.out.println("Found path to central area");
-            openSet = new PriorityQueue<>(Comparator.comparingDouble(c -> c.f));
-            closedSet = new HashSet<>();
-        }
-        else{
-            System.out.println("No path found");
-        }
-
-        // now find the path to the goal starting from the central area
-        if(findShortestPath(noFlyZones, centralArea, centralStart, goal)){
+        if(findShortestPath(noFlyZones, centralArea, start, goal, breakOnCenter)) {
             return path;
         }
         else{
             System.out.println("No path found");
+            return null;
         }
-        return null;
     }
 }
 
