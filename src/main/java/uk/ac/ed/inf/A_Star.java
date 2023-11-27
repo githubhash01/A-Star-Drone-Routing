@@ -14,6 +14,8 @@ public class A_Star {
 
     // global defined variables for the search
     static PriorityQueue<Cell> openSet;     // frontier
+
+    static HashSet<Cell> openSetHash;
     static HashSet<Cell> closedSet;         // visited
     static List<Cell> path;                 // resulting path
 
@@ -22,12 +24,16 @@ public class A_Star {
     public static boolean findShortestPath(NamedRegion[] noFlyZones, NamedRegion centralArea,  Cell start, Cell goal, Boolean breakOnCenter){
         // add start to the queue first
         openSet.add(start);
+        // add start to the hash
+        openSetHash.add(start);
 
         // once there is element in the queue, then keep running
         while (!openSet.isEmpty()){
 
             // get the cell with the lowest cost
             Cell current = openSet.poll();
+            // remove the cell from the hash
+            openSetHash.remove(current);
             // mark the cell to be visited
             closedSet.add(current);
 
@@ -82,8 +88,6 @@ public class A_Star {
                     continue;
                 }
 
-
-
                 // otherwise
                 else{
                     // the g value of the next cell is the current cell's g value plus the distance between the two cells
@@ -96,38 +100,43 @@ public class A_Star {
                         // Check if this path is better than any previously generated path to the neighbor
                         if(tentativeG < existing_neighbor.g){
                             // update cost, parent information
-                            existing_neighbor.parent = current;
-                            existing_neighbor.dir = dir;
-                            existing_neighbor.g = tentativeG;
-                            existing_neighbor.h = euclideanHeuristic(existing_neighbor, goal);
-                            existing_neighbor.f = existing_neighbor.g + existing_neighbor.h;
+                            updateCell(goal, breakOnCenter, current, dir, tentativeG, existing_neighbor);
                         }
                     }
                     else{
                         // or directly add this cell to the frontier
                         Cell neighbor = new Cell(nextLngLat);
-                        neighbor.parent = current;
-                        neighbor.dir = dir;
-                        neighbor.g = tentativeG;
-                        neighbor.h = euclideanHeuristic(neighbor, goal);
-                        neighbor.f = neighbor.g + neighbor.h;
+                        updateCell(goal, breakOnCenter, current, dir, tentativeG, neighbor);
                         openSet.add(neighbor);
+                        openSetHash.add(neighbor);
                     }
                 }
             }
         }
         // No path found
         return false;
+    }
 
+    private static void updateCell(Cell goal, Boolean breakOnCenter, Cell current, double dir, double tentativeG, Cell existing_neighbor) {
+        existing_neighbor.parent = current;
+        existing_neighbor.dir = dir;
+        existing_neighbor.g = tentativeG;
+        if (breakOnCenter){
+            existing_neighbor.h = outsideCentralHeuristic(existing_neighbor, goal);
+        }
+        else {
+            existing_neighbor.h = euclideanHeuristic(existing_neighbor, goal);
+        }
+        existing_neighbor.f = existing_neighbor.g + existing_neighbor.h;
     }
 
     // finds the next cell to visit using the openSet
     public static Cell findNeighbor(LngLat lngLat){
-        if(openSet.isEmpty()){
+        if(openSetHash.isEmpty()){
             return null;
         }
 
-        Iterator<Cell> iterator = openSet.iterator();
+        Iterator<Cell> iterator = openSetHash.iterator();
 
         Cell find = null;
         while (iterator.hasNext()) {
@@ -142,13 +151,19 @@ public class A_Star {
 
     // Heuristic function that uses Euclidean distance
     public static double euclideanHeuristic(Cell a, Cell b) {
+        // number of moves is the distance divided by drone move distance, to the nearest move distance
         return lngLatHandler.distanceTo(a.lngLat, b.lngLat);
+    }
+
+    // Heuristic function for outside central routing is faster, but less accurate
+    public static double outsideCentralHeuristic(Cell a, Cell b){
+        return lngLatHandler.distanceTo(a.lngLat, b.lngLat) / SystemConstants.DRONE_MOVE_DISTANCE;
     }
 
     public static List<Cell> runA_Star(NamedRegion[] noFlyZones, NamedRegion centralArea, Cell start, Cell goal, Boolean breakOnCenter){
         // initialize the global variable
-        List<Cell> first = new ArrayList<>();
         openSet = new PriorityQueue<>(Comparator.comparingDouble(c -> c.f));
+        openSetHash = new HashSet<>();
         closedSet = new HashSet<>();
 
         if(findShortestPath(noFlyZones, centralArea, start, goal, breakOnCenter)) {

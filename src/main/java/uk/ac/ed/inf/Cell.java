@@ -14,7 +14,6 @@ public class Cell {
     public Cell(LngLat lngLat) {
         this.lngLat = lngLat;
         parent = null;
-        dir = 999.0;
         f = 0;
         g = 0;
         h = 0;
@@ -35,10 +34,6 @@ public class Cell {
         }
         Cell other = (Cell) obj;
         return other.lngLat.equals(lngLat);
-    }
-
-    public double getAngle() {
-        return dir;
     }
 
 }

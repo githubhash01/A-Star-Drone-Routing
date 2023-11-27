@@ -8,7 +8,10 @@ import uk.ac.ed.inf.ilp.data.*;
 // import the order validator
 
 
+import javax.naming.Name;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.List;
 
 public class RoutePlannerTest extends TestCase
 {
@@ -30,59 +33,35 @@ public class RoutePlannerTest extends TestCase
         return new TestSuite( AppTest.class );
     }
 
-    /**
-     * Rigourous Test :-)
-    public void testFull()
-    {
+    public void testFarAwayRestaurant() {
         // Set the local date to 2023-09-01
-        // First we get the restaurants and orders using the rest client
-        REST_Client rest_client = new REST_Client();
+        String url = "https://ilp-rest.azurewebsites.net";
+        String date = "2023-09-01";
 
+        // Create a flightlog
+        FlightLog flightLog = new FlightLog(LocalDate.parse(date));
+        // Get the data from REST service
+        REST_Client restClient = new REST_Client(url);
+        NamedRegion[] noFlyZones = restClient.fetchNoFlyZones();
+        NamedRegion centralArea = restClient.fetchCentralArea();
+        Restaurant[] restaurants = restClient.fetchRestaurants();
+        // Create a routePlanner
+        RoutePlanner routePlanner = new RoutePlanner(noFlyZones, centralArea, new LngLat(-3.1869, 55.9445));
+        
+        // Create a restaurant that is far away from the central area
+        LngLat farAwayLocation = new LngLat(-3.392473, 56.146233);
+        // opening days are Monday to Friday
+        DayOfWeek[] openingDays = {DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY};
+        Pizza[] menu = {new Pizza("Margherita", 10)};
+        Restaurant restaurant = new Restaurant("name", farAwayLocation, openingDays, menu);
 
-        // create a flightpath and a deliveries object to store the flightpath and the deliveries of the day
-        DroneFlightPath droneFlightPath = new DroneFlightPath();
-        Deliveries deliveries = new Deliveries();
+        // Get the route from the route planner
+        List<Cell> route = routePlanner.getRoute(restaurant);
+        // add the route to the flight log
+        flightLog.logRoute("0", route);
+        // get the flightlog to output the route
+        flightLog.writeDroneFlightpath();
 
-        Restaurant[] restaurants = rest_client.fetchRestaurants();
-        NamedRegion[] noFlyZones = rest_client.fetchNoFlyZones();
-        NamedRegion centralArea = rest_client.fetchCentralArea();
-
-        // Create the orders manually so that each order has a pizza from a different restaurant
-        Order[] orders = new Order[4];
-
-        // Create credit card details
-        CreditCardInformation creditCardInformation = new CreditCardInformation();
-
-        // Set the date to today
-        LocalDate date = LocalDate.now();
-        for (int i =0; i<4; i++){
-            // get the first pizza on the menu of the ith restaurant
-            Pizza[] pizza = {restaurants[i].menu()[0]};
-            // create a new order with the pizza
-            orders[i] = new Order("orderNo",date, 1000, pizza, creditCardInformation);
-            // set the order status to 'VALID_BUT_NOT_DELIVERED'
-            orders[i].setOrderStatus(OrderStatus.VALID_BUT_NOT_DELIVERED);
-        }
-
-        LngLat appleton = new LngLat(-3.1869, 55.9445);
-
-        // create a drone and a router for the drone
-        Router router = new Router(noFlyZones, centralArea, appleton);
-        Drone drone = new Drone(router, droneFlightPath, deliveries);
-
-        // just get the first two orders
-        Order[] restrictedOrders = {orders[1]};;
-        // let the drone deliver the all the orders of the day
-        for (Order order : orders){
-            // get the drone to deliver the order
-            drone.deliverOrder(order, restaurants[0]);
-        }
-
-        // write the flightpath and the deliveries to the json files
-        droneFlightPath.writeDroneFlightpath();
-
-        // Then we print the deliveries
-        System.out.println(deliveries);
     }
-     */
+
 }
