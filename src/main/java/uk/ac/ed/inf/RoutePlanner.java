@@ -3,7 +3,6 @@ package uk.ac.ed.inf;
 import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
 import uk.ac.ed.inf.ilp.data.Restaurant;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -11,11 +10,13 @@ import java.util.List;
 
 /**
  * RoutePlanner:
- *      Takes geographic data, central area, no-fly-zones, appleton tower
- *      Plans the route for the drone to pick up and deliver an order from a restaurant
- *      Builds the full pick-up and delivery route by starting with the delivery route and then reversing it
- *      Builds routes in 2 stages, routes to central (if the restaurant is outside the central area) and then to appleton
- *      Caches the full route for each restaurant to avoid recalculating it for later orders from the same restaurant
+    - Takes data on central area, no-fly-zones, appleton tower
+    - Plans the route for the drone to pick up and deliver an order from a restaurant
+    - Builds the full pick-up and delivery route by starting with the delivery route and then reversing it
+    - Builds routes in 2 stages, routes to central (if the restaurant is outside the central area) and then to appleton
+    - Caches the full route for each restaurant to avoid recalculating it for later orders from the same restaurant
+    - Additional functions for planning the most direct route to the central area if all no-fly-zones are inside
+      the central area, in which case the drone goes directly to the closest point
  */
 
 public class RoutePlanner {
@@ -115,13 +116,11 @@ public class RoutePlanner {
 
     // checks that all the no-fly-zones are inside the central area
     private boolean noFlyZonesAllCentral(){
-        boolean outOfBounds = false;
         for (NamedRegion noFlyZone : noFlyZones) {
             // go through each point in the no-fly-zone
             for (LngLat point : noFlyZone.vertices()) {
                 // if any point is outside the central area, then at least one no-fly-zone is outside the central area
                 if (!lnglatHandler.isInRegion(point, centralArea)){
-                    outOfBounds = true;
                     return false;
                 }
             }
@@ -162,7 +161,6 @@ public class RoutePlanner {
 
     // finds the closest point on the edge of the named region to the cell
     private LngLat getRegionClosestPoint(NamedRegion centralArea, Cell point) {
-        // TODO implement this
         /*
          * Goes through every edge of the named region
          * For each edge, finds the closest point on the edge to the cell
@@ -189,7 +187,5 @@ public class RoutePlanner {
         }
         return closestPoint;
     }
-
-
 }
 

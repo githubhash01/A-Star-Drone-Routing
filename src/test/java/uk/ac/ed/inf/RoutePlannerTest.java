@@ -44,10 +44,8 @@ public class RoutePlannerTest extends TestCase
         REST_Client restClient = new REST_Client(url);
         NamedRegion[] noFlyZones = restClient.fetchNoFlyZones();
         NamedRegion centralArea = restClient.fetchCentralArea();
-        Restaurant[] restaurants = restClient.fetchRestaurants();
-        // Create a routePlanner
         RoutePlanner routePlanner = new RoutePlanner(noFlyZones, centralArea, new LngLat(-3.1869, 55.9445));
-        
+
         // Create a restaurant that is far away from the central area
         LngLat farAwayLocation = new LngLat(-3.392473, 56.146233);
         // opening days are Monday to Friday
@@ -57,6 +55,8 @@ public class RoutePlannerTest extends TestCase
 
         // Get the route from the route planner
         List<Cell> route = routePlanner.getRoute(restaurant);
+        // test that the route is not null
+        assertNotNull(route);
         // add the route to the flight log
         flightLog.logRoute("0", route);
         // get the flightlog to output the route

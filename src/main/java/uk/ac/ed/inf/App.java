@@ -1,16 +1,21 @@
 package uk.ac.ed.inf;
 
-// import the CentralRegionVertexOrder class from the ilp project
 import com.fasterxml.jackson.core.JsonProcessingException;
 import uk.ac.ed.inf.ilp.constant.OrderStatus;
 import uk.ac.ed.inf.ilp.data.*;
-
 import java.time.LocalDate;
 import java.util.List;
 
 /**
- * The main class of the project that contains the main method
+ * App class where PizzaDronz can be run from
+    - validates the input parameters (date and url)
+    - initialises the flight log to store flightpath, list of deliveries for the day
+    - fetches the data from the REST service (orders, no-fly zones, central area and restaurants)
+    - delivers the orders (using the OrderValidator class to validate the orders and the
+      RoutePlanner class to route the valid orders)
+    - outputs the flight logs (using the FlightLog class already instantiated)
  */
+
 public class App 
 {
 

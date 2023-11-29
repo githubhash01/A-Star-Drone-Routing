@@ -1,20 +1,12 @@
 package uk.ac.ed.inf;
 
-// import the LineString class from the GeoJSON jackson library
-
 import org.geojson.FeatureCollection;
 import org.geojson.Feature;
 import org.geojson.LineString;
 import org.geojson.LngLatAlt;
-
-// importing jackson core exception packages
 import com.fasterxml.jackson.core.JsonProcessingException;
-
-// import ObjectMapper from jackson databind
 import com.fasterxml.jackson.databind.ObjectMapper;
 import uk.ac.ed.inf.ilp.data.Order;
-
-
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -23,10 +15,10 @@ import java.util.List;
 
 /**
  * FlightLog Class
- * -- A class for holding the flightpath data: deliveries, flightpath and drone flightpath (geojson)
- * -- Method for adding routes to the flightpath
- * -- Method for adding of deliveries to json
- * -- Method for output of each file
+    - A class for holding the flightpath data: deliveries, flightpath and drone flightpath (geojson)
+    - Method for adding routes to the flightpath
+    - Method for adding of deliveries to the deliveries list
+    - Method for outputting each json file
  */
 
 public class FlightLog {
@@ -115,7 +107,7 @@ public class FlightLog {
             file.write(json);
             file.close();
         } catch (IOException e) {
-            System.out.println("Error writing JSON to file");;
+            System.out.println("Error writing JSON to file");
         }
     }
 

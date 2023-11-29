@@ -29,6 +29,8 @@ public class Move {
         this.toLatitude = to.lat();
         this.angle = getAngle(fromLongitude, fromLatitude, toLongitude, toLatitude);
     }
+
+    // get the angle of a move by calculating from start and end coordinates
     private double getAngle(double fromLongitude, double fromLatitude, double toLongitude, double toLatitude){
         // if the drone did not move, we know it was hovering so the angle is set to 999
         if (fromLongitude == toLongitude && fromLatitude == toLatitude){

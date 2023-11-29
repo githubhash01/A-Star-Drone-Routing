@@ -1,6 +1,5 @@
 package uk.ac.ed.inf;
 
-// Imports from the ILP starter code
 import uk.ac.ed.inf.ilp.data.Order;
 import uk.ac.ed.inf.ilp.constant.OrderStatus;
 import uk.ac.ed.inf.ilp.data.Restaurant;
@@ -8,11 +7,15 @@ import uk.ac.ed.inf.ilp.interfaces.OrderValidation;
 import uk.ac.ed.inf.ilp.constant.OrderValidationCode;
 import uk.ac.ed.inf.ilp.data.Pizza;
 import uk.ac.ed.inf.ilp.constant.SystemConstants;
-
-// Utility Imports
 import java.time.DayOfWeek;
 import java.util.Arrays;
 
+/**
+ * Order Validator
+    - validates the order according to the rules in the specification
+    - changes the order status and order validation code accordingly
+    - contains helper functions for the validation and additional method for retrieving the restaurant of a valid order
+ */
 
 public class OrderValidator implements OrderValidation {
     @Override

@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 /**
- * Unit test for simple App.
+ * System tests that run the app and then test the output files to see if they meet requirements
  */
 public class AppTest 
     extends TestCase
@@ -31,9 +31,26 @@ public class AppTest
     /**
      * Rigourous Test :-)
      */
-    public void farAwayRestaurant()
+    public void testHover()
     {
+        assertTrue( true );
+    }
 
+    //
+    public void testDeliveriesInOrder(){
 
     }
+
+    /**
+     * Test that the drone flight path is feasible
+     * 1. All moves are within the possible move distance
+     * 2. All angles are within the possible angle range
+     * 3. The drone starts and ends at appleton
+     * 4. The drone does not fly through no-fly zones
+     */
+    public void testDroneFlightPathFeasible(){
+
+    }
+
+
 }

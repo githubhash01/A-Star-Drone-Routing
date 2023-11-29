@@ -10,14 +10,15 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import uk.ac.ed.inf.ilp.data.Restaurant;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
 import uk.ac.ed.inf.ilp.data.Order;
+
 /**
- * A very simple client to GET JSON data from a remote server
+ * REST Client
+    - Modified from Tutorial
+    - A very simple client to GET JSON data from a remote server
  */
 
 public class REST_Client {
-    private final String BASE;
     // Endpoints
-
     private final String ISALIVE;
     private final String CENTRAL_AREA_URL;
     public final String NO_FLY_ZONES_URL;
@@ -27,7 +28,6 @@ public class REST_Client {
     private static final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     public REST_Client(String url) {
-        	BASE = url;
             ISALIVE = url + "/isAlive";
             CENTRAL_AREA_URL = url + "/centralArea";
             NO_FLY_ZONES_URL = url + "/noFlyZones";
