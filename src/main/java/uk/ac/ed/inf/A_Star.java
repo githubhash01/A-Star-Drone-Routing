@@ -79,11 +79,11 @@ public class A_Star {
                         }
                     }
                 }
-                boolean exitingCenter = !lngLatHandler.isInRegion(nextLngLat, centralArea) && !outsideCentral;
+                //boolean exitingCenter = !lngLatHandler.isInRegion(nextLngLat, centralArea) && !outsideCentral;
                 boolean visited = closedSet.contains(existing_neighbor);
 
                 // if the next location is in a not a no-fly-zone and not visited and not attempting to exit the center
-                if (!isInNoFlyZone && !visited && !exitingCenter) {
+                if (!isInNoFlyZone && !visited) {
                     // the g value of the next cell is the current cell's g value plus the distance between the two cells
                     double tentativeG = current.g + SystemConstants.DRONE_MOVE_DISTANCE;
                     // if the neighbor is not in the frontier, then add it to the frontier
@@ -160,8 +160,8 @@ public class A_Star {
             return path;
         }
         else{
-            System.out.println("No path found");
-            return null;
+            // run time exception
+            throw new RuntimeException("No path found");
         }
     }
 }

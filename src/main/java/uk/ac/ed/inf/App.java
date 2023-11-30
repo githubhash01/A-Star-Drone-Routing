@@ -19,12 +19,12 @@ import java.util.List;
 public class App 
 {
 
-    static private final LngLat APPLETON = new LngLat(-3.1869, 55.9445);
-    static private Order[] orders;
+    static private final LngLat APPLETON = new LngLat(-3.186874, 55.944494);
+    static Order[] orders;
     static private NamedRegion[] noFlyZones;
     static private NamedRegion centralArea;
-    static private Restaurant[] restaurants;
-    static private FlightLog flightLog;
+    static Restaurant[] restaurants;
+    static FlightLog flightLog;
     static private LocalDate date;
     static private REST_Client restClient;
 
@@ -43,11 +43,11 @@ public class App
     }
 
     private static void fetchRESTData(){
-        // fetch the orders, no-fly zones, central area and restaurants from the REST service
-        orders = restClient.fetchOrders(date);
+
         noFlyZones = restClient.fetchNoFlyZones();
         centralArea = restClient.fetchCentralArea();
         restaurants = restClient.fetchRestaurants();
+        orders = restClient.fetchOrders(date);
     }
 
     private static void deliverOrders(){
@@ -63,7 +63,7 @@ public class App
                 List<Cell> route = routePlanner.getRoute(restaurant);
                 // Order has now been 'delivered' so update the status
                 validatedOrder.setOrderStatus(OrderStatus.DELIVERED);
-                // Log the route and the order
+                // Log the route taken to delivery the order
                 flightLog.logRoute(validatedOrder.getOrderNo(), route);
             }
             // update the deliveries with the order whether it was delivered or not

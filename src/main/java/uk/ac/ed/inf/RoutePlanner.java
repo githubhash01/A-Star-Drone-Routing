@@ -3,6 +3,7 @@ package uk.ac.ed.inf;
 import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
 import uk.ac.ed.inf.ilp.data.Restaurant;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,16 +25,14 @@ public class RoutePlanner {
     private final LngLatHandler lnglatHandler;
     private final NamedRegion[] noFlyZones;
     private final NamedRegion centralArea;
-    private final LngLat appleton;
-
+    private final Cell appleton;
     private final boolean noFlyZonesAllCentral;
-
-    private final HashMap<Restaurant, List<Cell>> restaurantRoutes = new HashMap<>();
+    private final HashMap<Restaurant, List<Cell>> savedRoutes = new HashMap<>();
 
     public RoutePlanner(NamedRegion[] noFlyZones, NamedRegion centralArea, LngLat appleton){
         this.noFlyZones = noFlyZones;
         this.centralArea = centralArea;
-        this.appleton = appleton;
+        this.appleton = new Cell(appleton); // convert to cell
         this.lnglatHandler = new LngLatHandler();
         this.noFlyZonesAllCentral = noFlyZonesAllCentral();
 
@@ -41,76 +40,79 @@ public class RoutePlanner {
 
     // get the route from the restaurant to appleton tower
     public List<Cell> getRoute(Restaurant restaurant){
-
         // if the route is saved in the cache, then return it
-        if (restaurantRoutes.containsKey(restaurant)){
-            return restaurantRoutes.get(restaurant);
+        if (savedRoutes.containsKey(restaurant)){
+            return savedRoutes.get(restaurant);
         }
-        // get the route from the restaurant to appleton tower
-        List<Cell> routeToAT = getPickupRoute(restaurant);
-        // get the full pickup and delivery (round-trip) route
-        List<Cell> roundTrip = getRoundTrip(routeToAT);
+        // get the pick-up route from appleton to the restaurant
+        List<Cell> pickUpRoute = getPickUp(restaurant);
+        // get the round trip (pickup and delivery) route
+        List<Cell> roundTrip = getRoundTrip(pickUpRoute);
+        // add appleton to the round trip as a hover
+        roundTrip.add(appleton);
         // cache the route
-        restaurantRoutes.put(restaurant, roundTrip);
-
+        savedRoutes.put(restaurant, roundTrip);
+        // return route
         return roundTrip;
-
     }
 
-    // gets the route from the restaurant to appleton tower
-    public List<Cell> getPickupRoute(Restaurant restaurant){
+    // gets the round trip (pickup and delivery) route from just the pickup route
+    public List<Cell> getRoundTrip(List<Cell> pickUpRoute){
+        List<Cell> delivery = getDelivery(pickUpRoute);
+        pickUpRoute.addAll(delivery);
+        return pickUpRoute;
+    }
 
+    // reverses the pickup route to get the delivery route
+    public List<Cell> getDelivery(List<Cell> pickUpRoute){
+        List<Cell> delivery = new ArrayList<>(pickUpRoute);
+        Collections.reverse(delivery);
+        //
+        return delivery;
+    }
+
+    public List<Cell> getPickUp(Restaurant restaurant){
         Cell restaurant_loc = new Cell(restaurant.location());
-        boolean isInCentral = lnglatHandler.isInRegion(restaurant_loc.lngLat, centralArea);
-
-        // if the restaurant is inside the central area, then go directly to appleton
-        if (isInCentral){
-            return getRouteToAT(restaurant_loc);
+        // if the restaurant is in the central area, then go directly to appleton
+        if (inCentralArea(restaurant)){
+            return A_Star.runA_Star(noFlyZones, centralArea, appleton, restaurant_loc, false);
         }
-
-        // otherwise first go to the central area, and from there go to appleton
-        else {
-            List<Cell> routeToCenter = getRouteToCenter(restaurant_loc);
-            // get the center start from the final point of the route to the center
-            Cell center = new Cell(routeToCenter.get(routeToCenter.size()-1).lngLat);
-            // remove the last cell from the route to center, to avoid duplicates
-            routeToCenter.remove(routeToCenter.size()-1);
-            List<Cell> routeToAppleton = getRouteToAT(center);
-            routeToCenter.addAll(routeToAppleton);
-            return routeToCenter;
-        }
+        // otherwise find the exit point from the central area and go there
+        Cell exitPoint = getExitPoint(restaurant);
+        List<Cell> exitRoute = A_Star.runA_Star(noFlyZones, centralArea, appleton, exitPoint, false);
+        // get the last value of the exitRoute to use as the start point for the route to the restaurant
+        exitPoint = new Cell(exitRoute.get(exitRoute.size()-1).lngLat);
+        // go to the restaurant from the exit point
+        List<Cell> restaurantRoute = A_Star.runA_Star(noFlyZones, centralArea, exitPoint, restaurant_loc, false);
+        // remove the first cell from the restaurant route, to avoid duplicates
+        restaurantRoute.remove(0);
+        // combine the two routes
+        exitRoute.addAll(restaurantRoute);
+        return exitRoute;
     }
 
-    // input the route from the restaurant to appleton tower and return the full route
-    // appleton -> restaurant -> appleton
-    public List<Cell> getRoundTrip(List<Cell> route){
-        List<Cell> reversedRoute = new ArrayList<>(route);
-        Collections.reverse(reversedRoute);
-        reversedRoute.addAll(route);
-        return reversedRoute;
-    }
-
-    // gets the route from a restaurant to the central area using A*
-    public List<Cell> getRouteToCenter(Cell restaurant){
+    public Cell getExitPoint(Restaurant restaurant){
+        Cell restaurant_loc = new Cell(restaurant.location());
+        // if the all the no-fly-zones are contained in the central area, then go directly to the closest point
         if (noFlyZonesAllCentral){
-            Cell closestPoint = new Cell(getRegionClosestPoint(centralArea, restaurant));
-            return A_Star.runA_Star(noFlyZones, centralArea, restaurant, closestPoint, true);
+            return new Cell(getRegionClosestPoint(centralArea, restaurant_loc));
         }
+        // otherwise do A* to find where the best exit point is from the point of view of the restaurant
         else {
-            Cell appleton = new Cell(this.appleton);
-            return A_Star.runA_Star(noFlyZones, centralArea, restaurant, appleton, true);
+            List<Cell> returnRoute = A_Star.runA_Star(noFlyZones, centralArea, restaurant_loc, appleton, true);
+            // return the last cell in the route (exit point)
+            return returnRoute.get(returnRoute.size()-1);
         }
     }
 
-    // get the route from a central area location to appleton tower using A*
-    public List<Cell> getRouteToAT(Cell restaurant){
-        Cell appleton = new Cell(this.appleton);
-        return A_Star.runA_Star(noFlyZones, centralArea, restaurant, appleton, false);
+    public boolean inCentralArea(Restaurant restaurant){
+        Cell restaurant_loc = new Cell(restaurant.location());
+        return lnglatHandler.isInRegion(restaurant_loc.lngLat, centralArea);
     }
-
 
     /**
-     * Additional functions for planning the most direct route to the central area
+     * Additional functions for planning the most direct route to the central area, in the case that all no-fly-zones
+     * are inside the central area (i.e. the drone can go directly to the closest point on the edge of the central area)
      * N.B to disable this feature, set noFlyZonesAllCentral to false
      */
 

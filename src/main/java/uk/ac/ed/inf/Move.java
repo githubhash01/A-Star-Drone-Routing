@@ -1,5 +1,6 @@
 package uk.ac.ed.inf;
 
+import uk.ac.ed.inf.ilp.constant.SystemConstants;
 import uk.ac.ed.inf.ilp.data.LngLat;
 
 /**
@@ -45,6 +46,10 @@ public class Move {
         }
         // convert to degrees and round to the closest 22.5-degree angle
         angle = Math.round(Math.toDegrees(angle)/22.5)*22.5;
+        // if the angle is 360, set it to 0
+        if (angle == 360){
+            angle = 0;
+        }
         return angle;
 
     }
