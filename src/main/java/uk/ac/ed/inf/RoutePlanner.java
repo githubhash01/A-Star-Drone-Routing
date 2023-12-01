@@ -11,13 +11,13 @@ import java.util.List;
 
 /**
  * RoutePlanner:
-    - Takes data on central area, no-fly-zones, appleton tower
-    - Plans the route for the drone to pick up and deliver an order from a restaurant
-    - Builds the full pick-up and delivery route by starting with the delivery route and then reversing it
-    - Builds routes in 2 stages, routes to central (if the restaurant is outside the central area) and then to appleton
-    - Caches the full route for each restaurant to avoid recalculating it for later orders from the same restaurant
-    - Additional functions for planning the most direct route to the central area if all no-fly-zones are inside
-      the central area, in which case the drone goes directly to the closest point
+ - Takes data on central area, no-fly-zones, appleton tower
+ - Plans the route for the drone to pick up and deliver an order from a restaurant
+ - Builds the full pick-up and delivery route by starting with the delivery route and then reversing it
+ - Builds routes in 2 stages, routes to central (if the restaurant is outside the central area) and then to appleton
+ - Caches the full route for each restaurant to avoid recalculating it for later orders from the same restaurant
+ - Additional functions for planning the most direct route to the central area if all no-fly-zones are inside
+ the central area, in which case the drone goes directly to the closest point
  */
 
 public class RoutePlanner {
@@ -67,7 +67,6 @@ public class RoutePlanner {
     public List<Cell> getDelivery(List<Cell> pickUpRoute){
         List<Cell> delivery = new ArrayList<>(pickUpRoute);
         Collections.reverse(delivery);
-        //
         return delivery;
     }
 
@@ -75,15 +74,22 @@ public class RoutePlanner {
         Cell restaurant_loc = new Cell(restaurant.location());
         // if the restaurant is in the central area, then go directly to appleton
         if (inCentralArea(restaurant)){
-            return A_Star.runA_Star(noFlyZones, centralArea, appleton, restaurant_loc, false);
+            return A_Star.runA_Star(noFlyZones, centralArea, appleton, restaurant_loc, false, true);
         }
-        // otherwise find the exit point from the central area and go there
-        Cell exitPoint = getExitPoint(restaurant);
-        List<Cell> exitRoute = A_Star.runA_Star(noFlyZones, centralArea, appleton, exitPoint, false);
+        // otherwise drone must exit the central area, and then go to the restaurant
+        Cell exitPoint;
+        if (noFlyZonesAllCentral){
+            exitPoint = new Cell(getRegionClosestPoint(centralArea, restaurant_loc));
+        }
+        else {
+            exitPoint = restaurant_loc;
+        }
+        // get the route to exit the central area
+        List<Cell> exitRoute = A_Star.runA_Star(noFlyZones, centralArea, appleton, exitPoint, true, false);
         // get the last value of the exitRoute to use as the start point for the route to the restaurant
         exitPoint = new Cell(exitRoute.get(exitRoute.size()-1).lngLat);
         // go to the restaurant from the exit point
-        List<Cell> restaurantRoute = A_Star.runA_Star(noFlyZones, centralArea, exitPoint, restaurant_loc, false);
+        List<Cell> restaurantRoute = A_Star.runA_Star(noFlyZones, centralArea, exitPoint, restaurant_loc, false, false);
         // remove the first cell from the restaurant route, to avoid duplicates
         restaurantRoute.remove(0);
         // combine the two routes
@@ -91,19 +97,6 @@ public class RoutePlanner {
         return exitRoute;
     }
 
-    public Cell getExitPoint(Restaurant restaurant){
-        Cell restaurant_loc = new Cell(restaurant.location());
-        // if the all the no-fly-zones are contained in the central area, then go directly to the closest point
-        if (noFlyZonesAllCentral){
-            return new Cell(getRegionClosestPoint(centralArea, restaurant_loc));
-        }
-        // otherwise do A* to find where the best exit point is from the point of view of the restaurant
-        else {
-            List<Cell> returnRoute = A_Star.runA_Star(noFlyZones, centralArea, restaurant_loc, appleton, true);
-            // return the last cell in the route (exit point)
-            return returnRoute.get(returnRoute.size()-1);
-        }
-    }
 
     public boolean inCentralArea(Restaurant restaurant){
         Cell restaurant_loc = new Cell(restaurant.location());
@@ -190,4 +183,3 @@ public class RoutePlanner {
         return closestPoint;
     }
 }
-

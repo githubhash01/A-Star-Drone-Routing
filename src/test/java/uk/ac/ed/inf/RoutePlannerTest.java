@@ -44,10 +44,11 @@ public class RoutePlannerTest extends TestCase
         REST_Client restClient = new REST_Client(url);
         NamedRegion[] noFlyZones = restClient.fetchNoFlyZones();
         NamedRegion centralArea = restClient.fetchCentralArea();
-        RoutePlanner routePlanner = new RoutePlanner(noFlyZones, centralArea, new LngLat(-3.1869, 55.9445));
+        LngLat appleton = new LngLat(-3.186874, 55.944494);
+        RoutePlanner routePlanner = new RoutePlanner(noFlyZones, centralArea, appleton);
 
         // Create a restaurant that is far away from the central area
-        LngLat farAwayLocation = new LngLat(-3.392473, 56.146233);
+        LngLat farAwayLocation = new LngLat(-3.2025, 55.9433);
         // opening days are Monday to Friday
         DayOfWeek[] openingDays = {DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY};
         Pizza[] menu = {new Pizza("Margherita", 10)};

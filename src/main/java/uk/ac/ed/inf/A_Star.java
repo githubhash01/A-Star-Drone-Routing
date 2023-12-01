@@ -26,7 +26,7 @@ public class A_Star {
     static HashSet<Cell> closedSet;         // visited
     static List<Cell> path;                 // resulting path
 
-    public static boolean findShortestPath(NamedRegion[] noFlyZones, NamedRegion centralArea,  Cell start, Cell goal, Boolean outsideCentral){
+    public static boolean findShortestPath(Cell start, Cell goal, NamedRegion[] noFlyZones, NamedRegion centralArea, Boolean breakOnExitCentral, Boolean stayInCentral){
         // add start to the queue first
         openSet.add(start);
         // add start to the hash
@@ -40,9 +40,11 @@ public class A_Star {
             openSetHash.remove(current);
             // mark the cell to be visited
             closedSet.add(current);
-            // if we want to break on center, then check if we are in the center
-            if (outsideCentral){
-                if (lngLatHandler.isInRegion(current.lngLat, centralArea)){
+
+
+            // if the goal is to break on exiting central, return the path when we exit the central area
+            if (breakOnExitCentral){
+                if (!lngLatHandler.isInRegion(current.lngLat, centralArea)){
                     path = new ArrayList<>();
                     while (current != null) {
                         path.add(current);
@@ -64,12 +66,19 @@ public class A_Star {
                 return true;
             }
 
-            // search neighbours i.e. all possible directions in all angles
+            // search neighbours
             for(double dir : DIRS){
                 // get the next location
                 LngLat nextLngLat = lngLatHandler.nextPosition(current.lngLat, dir);
                 Cell existing_neighbor = findNeighbor(nextLngLat);
 
+                // if we are supposed to stay in the central area, then it is illegal to exit
+                boolean illegalExit = false;
+                if (stayInCentral){
+                    if (!lngLatHandler.isInRegion(nextLngLat, centralArea)){
+                        illegalExit = true;
+                    }
+                }
                 boolean isInNoFlyZone = false;
                 if (noFlyZones != null) {
                     for (NamedRegion noFlyZone : noFlyZones) {
@@ -82,8 +91,8 @@ public class A_Star {
                 //boolean exitingCenter = !lngLatHandler.isInRegion(nextLngLat, centralArea) && !outsideCentral;
                 boolean visited = closedSet.contains(existing_neighbor);
 
-                // if the next location is in a not a no-fly-zone and not visited and not attempting to exit the center
-                if (!isInNoFlyZone && !visited) {
+
+                if (!isInNoFlyZone && !visited && !illegalExit) {
                     // the g value of the next cell is the current cell's g value plus the distance between the two cells
                     double tentativeG = current.g + SystemConstants.DRONE_MOVE_DISTANCE;
                     // if the neighbor is not in the frontier, then add it to the frontier
@@ -91,13 +100,13 @@ public class A_Star {
                         // Check if this path is better than any previously generated path to the neighbor
                         if(tentativeG < existing_neighbor.g){
                             // update cost, parent information
-                            updateCell(goal, outsideCentral, current, tentativeG, existing_neighbor);
+                            updateCell(goal, current, tentativeG, existing_neighbor);
                         }
                     }
                     else{
                         // or directly add this cell to the frontier
                         Cell neighbor = new Cell(nextLngLat);
-                        updateCell(goal, outsideCentral, current, tentativeG, neighbor);
+                        updateCell(goal, current, tentativeG, neighbor);
                         openSet.add(neighbor);
                         openSetHash.add(neighbor);
                     }
@@ -108,15 +117,10 @@ public class A_Star {
         return false;
     }
 
-    private static void updateCell(Cell goal, Boolean breakOnCenter, Cell current, double tentativeG, Cell existing_neighbor) {
+    private static void updateCell(Cell goal, Cell current, double tentativeG, Cell existing_neighbor) {
         existing_neighbor.parent = current;
         existing_neighbor.g = tentativeG;
-        if (breakOnCenter){
-            existing_neighbor.h = expectedMovesHeuristic(existing_neighbor, goal);
-        }
-        else {
-            existing_neighbor.h = euclideanHeuristic(existing_neighbor, goal);
-        }
+        existing_neighbor.h = euclideanHeuristic(existing_neighbor, goal);
         existing_neighbor.f = existing_neighbor.g + existing_neighbor.h;
     }
 
@@ -139,24 +143,19 @@ public class A_Star {
         return find;
     }
 
-    // Heuristic function that uses Euclidean distance (for use in central area)
+    // Heuristic function that uses Euclidean distance (for use in central area) with a slight bias
     public static double euclideanHeuristic(Cell a, Cell b) {
-        // number of moves is the distance divided by drone move distance, to the nearest move distance
-        return lngLatHandler.distanceTo(a.lngLat, b.lngLat);
+        return lngLatHandler.distanceTo(a.lngLat, b.lngLat) * (1 + SystemConstants.DRONE_MOVE_DISTANCE);
     }
 
-    // Heuristic function that uses expected moves (for use outside central area)
-    public static double expectedMovesHeuristic(Cell a, Cell b){
-        return lngLatHandler.distanceTo(a.lngLat, b.lngLat) / SystemConstants.DRONE_MOVE_DISTANCE;
-    }
-
-    public static List<Cell> runA_Star(NamedRegion[] noFlyZones, NamedRegion centralArea, Cell start, Cell goal, Boolean breakOnCenter){
+    public static List<Cell> runA_Star(NamedRegion[] noFlyZones, NamedRegion centralArea, Cell start, Cell goal, Boolean breakOnExitCentral, Boolean stayInCentral){
         // initialize the global variable
         openSet = new PriorityQueue<>(Comparator.comparingDouble(c -> c.f));
         openSetHash = new HashSet<>();
         closedSet = new HashSet<>();
+        path = new ArrayList<>();
 
-        if(findShortestPath(noFlyZones, centralArea, start, goal, breakOnCenter)) {
+        if(findShortestPath(start, goal, noFlyZones, centralArea, breakOnExitCentral, stayInCentral)) {
             return path;
         }
         else{
@@ -165,4 +164,3 @@ public class A_Star {
         }
     }
 }
-

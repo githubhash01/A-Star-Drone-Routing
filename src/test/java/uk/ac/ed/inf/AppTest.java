@@ -20,7 +20,7 @@ public class AppTest {
 
     @BeforeClass
     public static void setUp() {
-        String[] input = {"2023-09-02", "https://ilp-rest.azurewebsites.net/"};
+        String[] input = {"2023-09-01", "https://ilp-rest.azurewebsites.net/"};
         // Run the app
         App.main(input);
     }
