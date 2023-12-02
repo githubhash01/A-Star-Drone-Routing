@@ -1,6 +1,5 @@
 package uk.ac.ed.inf;
 
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import uk.ac.ed.inf.ilp.constant.OrderStatus;
@@ -15,25 +14,27 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
+/**
+ * System-wide tests on the ouptut of App
+ */
 public class AppTest {
 
 
     @BeforeClass
     public static void setUp() {
-        String[] input = {"2023-09-01", "https://ilp-rest.azurewebsites.net/"};
-        // Run the app
+        String[] input = {"2023-11-15", "https://ilp-rest.azurewebsites.net"};
         App.main(input);
     }
 
+
     @Test
     public void testOrders() {
-        // Get the deliveries from result files
         List<Delivery> deliveries = App.flightLog.deliveries;
-        // Print the number of deliveries
         System.out.println("Number of deliveries: " + deliveries.size());
     }
-    /*
-    Testing the flight path starts and ends at Appleton Tower for each new order
+
+    /**
+     * Every delivery should start and end at Appleton Tower
      */
     @Test
     public void testStartEnd(){
@@ -73,11 +74,11 @@ public class AppTest {
         assertTrue(lnglatHandler.isCloseTo(end, Appleton));
     }
 
-    /*
-    Testing that the distance between start and end of moves is zero (i.e no jumping)
+    /**
+     * The difference between the end of one move, and the start of the next should be zero (no jumping)
      */
     @Test
-    public void testDistanceBetweenMoves(){
+    public void testNoJumpingBetweenMoves(){
         // the drone must not move more than the move distance in one move
         List<Move> flightPath = App.flightLog.flightPath;
         List<Double> distances = new ArrayList<>();
@@ -87,9 +88,7 @@ public class AppTest {
             Move secondMove = flightPath.get(i+1);
             LngLat first = new LngLat(firstMove.toLongitude, firstMove.toLatitude);
             LngLat second = new LngLat(secondMove.fromLongitude, secondMove.fromLatitude);
-            // make sure that the
             double distance = lnglatHandler.distanceTo(first, second);
-            // add the distance to the list
             distances.add(distance);
         }
         // all the distances should be 0
@@ -98,8 +97,8 @@ public class AppTest {
         }
     }
 
-    /*
-    Testing that the distance moved is less than the move distance
+    /**
+     * The drone must either move the move distance, or zero when hovering
      */
     @Test
     public void testDistanceMoved(){
@@ -111,20 +110,22 @@ public class AppTest {
             Move secondMove = flightPath.get(i+1);
             LngLat first = new LngLat(firstMove.toLongitude, firstMove.toLatitude);
             LngLat second = new LngLat(secondMove.toLongitude, secondMove.toLatitude);
-            // make sure that the
-            double distance = lnglatHandler.distanceTo(first, second);
-            //assertTrue(distance < (SystemConstants.DRONE_MOVE_DISTANCE + 0.0001));
+            double distanceTo = lnglatHandler.distanceTo(first, second);
+            // Make sure the distance to is either 0 or the move distance within a tolerance
+            double tolerance = 0.0001;
+            boolean validDistanceTo = distanceTo == 0 ||  (Math.abs(distanceTo - SystemConstants.DRONE_MOVE_DISTANCE) <= tolerance);
+            assertTrue(validDistanceTo);
             // add the distance to the list
             LngLat firstFrom = new LngLat(firstMove.fromLongitude, firstMove.fromLatitude);
             LngLat secondFrom = new LngLat(secondMove.fromLongitude, secondMove.fromLatitude);
             double distanceFrom = lnglatHandler.distanceTo(firstFrom, secondFrom);
-            //assertTrue(distanceFrom < (SystemConstants.DRONE_MOVE_DISTANCE + 0.0001));
-            System.out.println(distanceFrom);
+            boolean validDistanceFrom = distanceFrom == 0 ||  (Math.abs(distanceFrom - SystemConstants.DRONE_MOVE_DISTANCE) <= tolerance);
+            assertTrue(validDistanceFrom);
         }
     }
 
-    /*
-    Making sure that the number of hovers is double the number of valid orders
+    /**
+     * Making sure that the number of hovers is double the number of valid orders
      */
     @Test
     public void testHover(){
@@ -170,8 +171,8 @@ public class AppTest {
         assertEquals(validOrderCount * 2, hoverCount);
         }
 
-    /*
-    Testing the order of the deliveries and the routing, is the same as the order of the orders
+    /**
+     * Testing the order of the deliveries, and the routing is the same as the order of the orders
      */
     @Test
     public void testOrderOfDeliveries(){
@@ -191,8 +192,8 @@ public class AppTest {
         }
     }
 
-    /*
-    Testing the drone delivers the orders in the right order
+    /**
+     * Testing the drone delivers the orders in the right order
      */
     @Test
     public void testOrderOfDroneDeliveries(){
@@ -224,4 +225,5 @@ public class AppTest {
         // check that the two lists are identical
         assertEquals(flightPathOrderNumbers, trueOrderNumbers);
     }
+
 }

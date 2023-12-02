@@ -17,7 +17,7 @@ import java.util.List;
  * FlightLog Class
     - A class for holding the flightpath data: deliveries, flightpath and drone flightpath (geojson)
     - Method for adding routes to the flightpath
-    - Method for adding of deliveries to the deliveries list
+    - Method for adding of deliveries to the delivery list
     - Method for outputting each json file
  */
 
@@ -36,11 +36,13 @@ public class FlightLog {
         this.drone_flightpath_file_path = base_url + "drone-"+ date + ".geojson";
     }
 
+    // log the order by putting it in the delivery list
     public void logOrder(Order order){
         Delivery delivery = new Delivery(order.getOrderNo(), order.getOrderStatus().toString(), order.getOrderValidationCode().toString(), order.getPriceTotalInPence());
         deliveries.add(delivery);
     }
 
+    // log the route by putting it in the flightpath list and the drone flightpath list
     public void logRoute(String orderNo, List<Cell> route) {
         droneFlightPath.addAll(route);
         for(int i =0; i<route.size()-1; i++){
@@ -49,25 +51,21 @@ public class FlightLog {
         }
     }
 
+    // write the delivery list to a json file
     public void writeDeliveries() throws JsonProcessingException{
-        // Takes the list of deliveries and makes it a list of JSon records
         ObjectMapper mapper = new ObjectMapper();
-        // Convert list to JSON string
         String json = mapper.writeValueAsString(deliveries);
-        // Then writes the json records to the file
         writeJSON(json, this.deliveries_file_path);
     }
 
+    // write the flightpath to a json file
     public void writeFlightpath() throws JsonProcessingException {
-        // Takes the list of moves and makes it a list of JSon records
         ObjectMapper mapper = new ObjectMapper();
-        // Convert list to JSON string
         String json = mapper.writeValueAsString(flightPath);
-        // Then writes the json records to the file
         writeJSON(json, this.flightpath_file_path);
     }
 
-    // write the drone flightpath to the file
+    // write the drone flightpath to a json file
     public void writeDroneFlightpath() {
 
         // check that the flightpath has been filled
@@ -97,7 +95,6 @@ public class FlightLog {
         catch (JsonProcessingException e) {
             System.out.println("Error converting drone path to geoJson");
         }
-        // write the json string to the file
         writeJSON(flightpathJson, this.drone_flightpath_file_path);
     }
 

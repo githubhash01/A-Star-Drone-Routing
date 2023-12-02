@@ -5,9 +5,9 @@ import java.util.Objects;
 
 /**
  * Cell class that represents a cell in the grid
- * - Modified from Tutorial
- * - Each cell has a longitude and latitude
- * - f = g + h (where g is cost to, and h is the heuristic or expected cost to goal)
+   - Modified from Tutorial
+   - Each cell has a longitude and latitude
+   - f = g + h (where g is cost to, and h is the heuristic or expected cost to goal)
  */
 
 public class Cell {

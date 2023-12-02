@@ -13,11 +13,12 @@ import java.util.List;
  * RoutePlanner:
  - Takes data on central area, no-fly-zones, appleton tower
  - Plans the route for the drone to pick up and deliver an order from a restaurant
- - Builds the full pick-up and delivery route by starting with the delivery route and then reversing it
- - Builds routes in 2 stages, routes to central (if the restaurant is outside the central area) and then to appleton
+ - Builds the full pick-up and delivery route by starting with the pickup route and then reversing it
+ - If the restaurant is inside the central area, then the drone goes directly to it from appleton tower
+ - Otherwise routes in 2 stages, routes out of central and then to the restaurant
  - Caches the full route for each restaurant to avoid recalculating it for later orders from the same restaurant
  - Additional functions for planning the most direct route to the central area if all no-fly-zones are inside
- the central area, in which case the drone goes directly to the closest point
+   the central area, in which case the drone goes directly to the closest point
  */
 
 public class RoutePlanner {
@@ -38,7 +39,7 @@ public class RoutePlanner {
 
     }
 
-    // get the route from the restaurant to appleton tower
+    // get the full route (pickup and delivery) for the restaurant
     public List<Cell> getRoute(Restaurant restaurant){
         // if the route is saved in the cache, then return it
         if (savedRoutes.containsKey(restaurant)){
@@ -47,7 +48,7 @@ public class RoutePlanner {
         // get the pick-up route from appleton to the restaurant
         List<Cell> pickUpRoute = getPickUp(restaurant);
         // get the round trip (pickup and delivery) route
-        List<Cell> roundTrip = getRoundTrip(pickUpRoute);
+        List<Cell> roundTrip = buildRoundTrip(pickUpRoute);
         // add appleton to the round trip as a hover
         roundTrip.add(appleton);
         // cache the route
@@ -56,8 +57,8 @@ public class RoutePlanner {
         return roundTrip;
     }
 
-    // gets the round trip (pickup and delivery) route from just the pickup route
-    public List<Cell> getRoundTrip(List<Cell> pickUpRoute){
+    // build the round trip (pickup and delivery) route from just the pickup route
+    public List<Cell> buildRoundTrip(List<Cell> pickUpRoute){
         List<Cell> delivery = getDelivery(pickUpRoute);
         pickUpRoute.addAll(delivery);
         return pickUpRoute;
@@ -70,6 +71,7 @@ public class RoutePlanner {
         return delivery;
     }
 
+    // gets the route from appleton tower to the restaurant
     public List<Cell> getPickUp(Restaurant restaurant){
         Cell restaurant_loc = new Cell(restaurant.location());
         // if the restaurant is in the central area, then go directly to appleton
@@ -126,7 +128,7 @@ public class RoutePlanner {
     // finds the closest point on the edge of the named region to the cell
     private LngLat closestOnEdge(LngLat A, LngLat B, LngLat P){
 
-        // convert the LngLat to double array
+        // convert the LngLat to array
         double[] A_ = {A.lng(), A.lat()};
         double[] B_ = {B.lng(), B.lat()};
         double[] P_ = {P.lng(), P.lat()};
@@ -148,7 +150,7 @@ public class RoutePlanner {
             return B;
         }
         else{
-            // otherwise the closest point is A + t*u
+            // otherwise, the closest point is A + t*u
             double[] closestPoint = {A_[0] + t*u[0], A_[1] + t*u[1]};
             return new LngLat(closestPoint[0], closestPoint[1]);
         }
@@ -159,7 +161,7 @@ public class RoutePlanner {
         /*
          * Goes through every edge of the named region
          * For each edge, finds the closest point on the edge to the cell
-         * Find the distance between the cell and the closest point
+         * Find the distance between the cell, and the closest point
          * Returns the closest point from all the edges
          */
         LngLat P = new LngLat(point.lngLat.lng(), point.lngLat.lat());

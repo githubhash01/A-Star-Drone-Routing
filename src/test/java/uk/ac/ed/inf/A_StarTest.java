@@ -1,6 +1,5 @@
 package uk.ac.ed.inf;
 
-// import
 import org.junit.Test;
 import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
@@ -8,7 +7,7 @@ import uk.ac.ed.inf.ilp.data.NamedRegion;
 import java.util.List;
 
 
-public class A_Star_Test {
+public class A_StarTest {
 
 
     @Test

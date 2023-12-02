@@ -40,6 +40,8 @@ public class App
         deliverOrders();
         // output the flight logs
         outputFlightLogs();
+        // exit with success
+        System.out.println("Drone routing complete");
     }
 
     private static void fetchRESTData(){
@@ -83,9 +85,9 @@ public class App
         }
     }
 
-
+    // prevents illegal arguments being passed to the program
     private static void validateInputParameters(String[] args){
-        // validate the input parameters
+        // only accept 2 arguments
         if (args.length != 2){
             System.out.println("Error: Incorrect number of arguments");
             System.exit(1);
@@ -101,13 +103,9 @@ public class App
         }
         // attempt the 'isAlive' check on the url
         restClient = new REST_Client(url);
-        System.out.println(url);
         if (!restClient.isAlive()){
             System.out.println("Error: could not reach the server");
             System.exit(1);
-        }
-        else{
-            System.out.println("URL is active");
         }
 
     }
