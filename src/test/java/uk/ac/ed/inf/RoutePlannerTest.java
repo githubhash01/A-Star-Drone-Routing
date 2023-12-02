@@ -4,10 +4,6 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import uk.ac.ed.inf.ilp.data.*;
-// import the order validator
-
-
-import javax.naming.Name;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
