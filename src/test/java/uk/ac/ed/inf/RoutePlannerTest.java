@@ -3,7 +3,6 @@ package uk.ac.ed.inf;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import uk.ac.ed.inf.ilp.constant.OrderStatus;
 import uk.ac.ed.inf.ilp.data.*;
 // import the order validator
 
