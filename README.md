@@ -1,60 +1,62 @@
-# Informatics Large Practical (ILP) - University of Edinburgh
+# Informatics Large Practical (ILP) - PizzaDronz Drone Delivery System
 
 ## Overview
-This repository contains the source code, documentation, and deliverables from my successful completion of the **Informatics Large Practical (ILP)** course at the University of Edinburgh (2023–2024). This Level 9, 20-credit course focuses on advanced software engineering practices through a real-world, individual project.
+This repository showcases my work on a drone delivery service simulation, **PizzaDronz**, developed as part of the **Informatics Large Practical** at the University of Edinburgh. The focus of the project was on solving real-world logistics challenges using state-of-the-art software engineering methodologies and a custom algorithmic approach.
 
-The central project is the development of a Java-based application for a simulated drone delivery service, **PizzaDronz**. The project emphasizes **design**, **implementation**, and **reflection** in software engineering, requiring robust coding, essay-based reasoning, and state-of-the-art methodologies.
-
----
-
-## Project Scope
-The project involved creating a drone delivery service capable of:
-- **Planning and optimizing delivery routes** within constraints like battery life, no-fly zones, and restaurant operating hours.
-- **Processing RESTful data**, including dynamic JSON inputs for orders, no-fly zones, and restaurant menus.
-- Generating output files for visualizing drone flight paths and documenting deliveries.
-
-### Core Deliverables:
-1. **Coursework 1 (CW1)**:
-   - Implemented initial design components using a provided JAR library.
-   - Wrote an essay explaining design decisions and future planning.
-
-2. **Coursework 2 (CW2)**:
-   - Developed the full Java application.
-   - Processed live REST API data to calculate feasible flight paths.
-   - Generated three output files:
-     - Delivery status (`deliveries-YYYY-MM-DD.json`)
-     - Detailed flight paths (`flightpath-YYYY-MM-DD.json`)
-     - Visual flight paths in GeoJSON (`drone-YYYY-MM-DD.geojson`).
+The project involves designing and implementing an **autonomous drone delivery system** that efficiently delivers orders while navigating complex constraints such as no-fly zones, battery limits, and dynamic data inputs.
 
 ---
 
 ## Key Features
-- **Data-Driven Architecture**:
-  - Designed to adapt to dynamic REST API inputs.
-  - Ensures flexibility for future enhancements.
 
-- **Algorithmic Drone Routing**:
-  - Implements a constraint-driven approach for optimal deliveries.
-  - Avoids no-fly zones while adhering to specific business rules.
+### 1. **Custom Pathfinding with Modified A***:
+   - Developed a modified A* algorithm tailored for this project to calculate the drone's optimal route.
+   - Incorporates:
+     - Avoidance of no-fly zones defined by geospatial polygons.
+     - Real-time constraints such as battery life, maximum delivery limits, and mandatory return points.
+     - Latitude and longitude-based navigation using a simplified planar distance model.
+   - Prioritizes both efficiency and safety, ensuring legal and efficient routes.
 
-- **Code Quality**:
-  - Robust, modular design with Java 18 features (streams, lambdas).
-  - Comprehensive documentation and error handling.
+### 2. **Dynamic REST API Integration**:
+   - Retrieves real-time data, including:
+     - Orders, restaurants, and their operating schedules.
+     - No-fly zones and central area boundaries.
+   - Processes JSON responses to adapt drone behavior to daily order volumes and updated constraints.
 
-- **Visual Insights**:
-  - GeoJSON flight paths visualized using [geojson.io](http://geojson.io).
+### 3. **Geospatial Data Visualization**:
+   - Generates GeoJSON files for visualizing drone flight paths, highlighting:
+     - No-fly zone avoidance.
+     - Optimized routes within Edinburgh's central area.
+   - Compatible with visualization tools like [geojson.io](http://geojson.io).
+
+### 4. **Robust Software Design**:
+   - Built with **Java 18** features (streams, lambdas, records) for modern, maintainable code.
+   - Implements comprehensive error handling and logging to ensure resilience in real-world scenarios.
+   - Outputs deliverables in industry-standard formats for easy integration and testing.
 
 ---
 
 ## Technologies Used
 - **Programming Language**: Java 18
-- **Development Tools**: IntelliJ IDEA, Maven, Git
+- **Tools**: IntelliJ IDEA, Maven, Git
 - **APIs & Libraries**:
-  - RESTful APIs for data retrieval.
-  - Jackson for JSON parsing.
-  - GeoJSON format for spatial data visualization.
+  - Jackson for JSON parsing and deserialization.
+  - GeoJSON format for spatial data representation.
 
 ---
+
+## Project Deliverables
+This project generates the following output files based on daily inputs:
+
+1. **Delivery Status File (`deliveries-YYYY-MM-DD.json`)**:
+   - Logs the status of each order (delivered, invalid, etc.) along with associated metadata.
+
+2. **Drone Flight Path File (`flightpath-YYYY-MM-DD.json`)**:
+   - Records the drone's move-by-move path, including angles, start/end coordinates, and active orders.
+
+3. **GeoJSON Visualization File (`drone-YYYY-MM-DD.geojson`)**:
+   - Visualizes the drone's route overlaid on a geospatial map, ensuring no-fly zone compliance.
+
 
 ## Repository Structure
 ```plaintext
