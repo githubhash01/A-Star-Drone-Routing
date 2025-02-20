@@ -57,13 +57,3 @@ This project generates the following output files based on daily inputs:
 3. **GeoJSON Visualization File (`drone-YYYY-MM-DD.geojson`)**:
    - Visualizes the drone's route overlaid on a geospatial map, ensuring no-fly zone compliance.
 
-
-## Repository Structure
-```plaintext
-📂 src/
-   ├── main/
-   │   ├── java/       # Java source code
-   │   └── resources/  # Configuration files
-   └── test/           # Unit tests
-📂 resultfiles/         # Generated output files (JSON, GeoJSON)
-📄 README.md            # Project documentation
